@@ -18,7 +18,7 @@ export default function Navigation() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="text-xl font-bold text-[color:var(--text)]">
-                Discovery System
+                Project Assist
               </Link>
             </div>
             <div className="flex items-center">
@@ -36,7 +36,7 @@ export default function Navigation() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="text-xl font-bold text-[color:var(--text)] hover:text-[var(--accent)] transition-colors">
-              Discovery System
+              Project Assist
             </Link>
             {isAuthenticated && (
               <div className="ml-10 flex items-baseline space-x-2">

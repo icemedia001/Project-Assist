@@ -116,7 +116,7 @@ export default function SessionInterface({
         {
           id: "welcome",
           type: "system",
-          content: "Welcome to the Discovery System!\n\nAvailable Commands:\n• @help - Show all available commands and how to use them\n• @brainstorm - Start an interactive brainstorming session with guided techniques\n• @analyst - Start a business analysis session for market research and competitive analysis\n• @pm - Start a project management session for idea prioritization and planning\n• @architect - Start a technical architecture session for system design\n• @validator - Start a validation session for risk assessment and feasibility\n\nTo begin, type a command (e.g., @brainstorm)",
+          content: "Welcome to Project Assist!\n\nAvailable Commands:\n• @help - Show all available commands and how to use them\n• @brainstorm - Start an interactive brainstorming session with guided techniques\n• @analyst - Start a business analysis session for market research and competitive analysis\n• @pm - Start a project management session for idea prioritization and planning\n• @architect - Start a technical architecture session for system design\n• @validator - Start a validation session for risk assessment and feasibility\n\nTo begin, type a command (e.g., @brainstorm)",
           timestamp: new Date(),
         },
       ]);

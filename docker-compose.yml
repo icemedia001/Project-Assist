@@ -33,7 +33,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Discovery System Application
+  # Project Assist Application
   app:
     build: .
     container_name: discovery-app

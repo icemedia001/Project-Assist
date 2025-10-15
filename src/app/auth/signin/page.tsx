@@ -23,7 +23,7 @@ export default function SignIn() {
       <div className="max-w-md w-full space-y-8 p-8 surface">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-bold">
-            Welcome to Discovery System
+            Welcome to Project Assist
           </h2>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
             Sign in to start your creative discovery journey

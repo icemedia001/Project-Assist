@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Discovery System",
+  title: "Project Assist",
   description: "AI-powered discovery and ideation platform for creative problem solving",
 };
 
