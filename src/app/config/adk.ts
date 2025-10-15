@@ -70,6 +70,13 @@ export const adkConfig: ADKConfig = {
 export async function createSessionService(): Promise<BaseSessionService> {
   try {
     if (adkConfig.sessionService.type === 'database' && adkConfig.sessionService.connectionString) {
+      try {
+        require('pg');
+      } catch (pgError) {
+        console.error('PostgreSQL driver not available:', pgError);
+        throw new Error('Missing required peer dependency: pg\nTo use PostgreSQL sessions, install the required package:\n\tnpm install pg\n\t# or\n\tpnpm add pg\n\t# or\n\tyarn add pg');
+      }
+      
       const service = createDatabaseSessionService(adkConfig.sessionService.connectionString);
       if (isDevelopment) {
         console.log('Using database session service');
@@ -111,7 +118,11 @@ export async function createArtifactService(): Promise<GcsArtifactService | InMe
 
       const storageOptions: any = {};
       if (credentials) {
-        storageOptions.keyFilename = credentials;
+        if (typeof credentials === 'string' && credentials.startsWith('{')) {
+          storageOptions.credentials = JSON.parse(credentials);
+        } else {
+          storageOptions.keyFilename = credentials;
+        }
       }
       if (projectId) {
         storageOptions.projectId = projectId;
@@ -132,6 +143,7 @@ export async function createArtifactService(): Promise<GcsArtifactService | InMe
         return gcsService;
       } catch (gcsError) {
         console.warn('GCS connection failed, falling back to in-memory artifact service:', gcsError);
+        return new InMemoryArtifactService();
       }
     }
     

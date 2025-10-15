@@ -255,7 +255,7 @@ export class RedisMemoryService implements BaseMemoryService {
           }
         }
         
-        return results;
+        return { memories: results };
       } catch (searchError) {
         console.warn('RediSearch not available, falling back to pattern matching:', searchError);
         
@@ -271,11 +271,11 @@ export class RedisMemoryService implements BaseMemoryService {
           }
         }
         
-        return results;
+        return { memories: results };
       }
     } catch (error) {
       console.error('Redis searchMemory error:', error);
-      return [];
+      return { memories: [] };
     }
   }
 
