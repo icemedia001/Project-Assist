@@ -6,22 +6,49 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.11.0",
+    "@google-cloud/storage": "^7.17.2",
+    "@iqai/adk": "^0.4.0",
+    "@prisma/client": "^6.17.1",
+    "@types/pg": "^8.15.5",
+    "dotenv": "^17.2.2",
+    "next": "15.5.4",
+    "next-auth": "^5.0.0-beta.29",
+    "pg": "^8.16.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.4"
+    "redis": "^4.7.0",
+    "yaml": "^2.8.1",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "@types/node": "^20.19.20",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
-    "@eslint/eslintrc": "^3"
+    "prisma": "^6.17.1",
+    "tailwindcss": "^4",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3"
+  },
+  "eslintConfig": {
+    "extends": ["next"],
+    "overrides": [
+      {
+        "files": ["src/generated/prisma/wasm.js"],
+        "rules": {
+          "@typescript-eslint/no-require-imports": "off"
+        }
+      }
+    ]
   }
 }
