@@ -60,7 +60,7 @@ export const generateDiscoveryReportTool = createTool({
   }
 });
 
-function generateDiscoveryReport(sessionData: any, format: string, includeVisualizations: boolean): string {
+export function generateDiscoveryReport(sessionData: any, format: string, includeVisualizations: boolean = false): string {
   const timestamp = new Date().toISOString();
   const reportTitle = `Discovery Report: ${sessionData.problemStatement}`;
   
@@ -74,107 +74,151 @@ function generateDiscoveryReport(sessionData: any, format: string, includeVisual
 }
 
 function generateMarkdownReport(sessionData: any, title: string, timestamp: string, includeVisualizations: boolean): string {
-  let report = `# ${title}\n\n`;
-  report += `**Generated:** ${timestamp}\n\n`;
-  report += `---\n\n`;
+  const sessionDate = new Date(timestamp).toLocaleDateString();
+  const agentRole = "Discovery Agent";
+  const agentName = "Project Assist";
+  const userName = "Participant";
+  
+  let report = `# Brainstorming Session Results\n\n`;
+  report += `**Session Date:** ${sessionDate}\n`;
+  report += `**Facilitator:** ${agentRole} ${agentName}\n`;
+  report += `**Participant:** ${userName}\n\n`;
   
   report += `## Executive Summary\n\n`;
-  report += `This discovery session explored "${sessionData.problemStatement}" using ${sessionData.techniquesUsed.join(", ")} techniques. `;
-  report += `We generated ${sessionData.ideas.length} ideas, organized them into ${sessionData.clusters?.length || 0} thematic clusters, `;
-  report += `and prioritized them based on impact, feasibility, and effort analysis.\n\n`;
+  report += `**Topic:** ${sessionData.problemStatement}\n\n`;
+  report += `**Session Goals:** ${sessionData.context || "Explore and generate innovative ideas"}\n\n`;
+  report += `**Techniques Used:** ${sessionData.techniquesUsed.length > 0 ? sessionData.techniquesUsed.join(", ") : "Discovery session"}\n\n`;
+  report += `**Total Ideas Generated:** ${sessionData.ideas.length}\n\n`;
   
-  report += `## Problem Statement\n\n`;
-  report += `${sessionData.problemStatement}\n\n`;
+  if (sessionData.clusters && sessionData.clusters.length > 0) {
+    report += `**Key Themes Identified:**\n`;
+    sessionData.clusters.forEach((cluster: any) => {
+      report += `- ${cluster.name}\n`;
+    });
+    report += `\n`;
+  }
   
-  report += `## Brainstorming Techniques\n\n`;
-  sessionData.techniquesUsed.forEach((technique: any) => {
-    report += `- **${technique}**: ${getTechniqueDescription(technique)}\n`;
+  if (sessionData.techniquesUsed && sessionData.techniquesUsed.length > 0) {
+    report += `## Technique Sessions\n\n`;
+    sessionData.techniquesUsed.forEach((technique: string, index: number) => {
+      report += `### ${technique} - Session ${index + 1}\n\n`;
+      report += `**Description:** ${getTechniqueDescription(technique)}\n\n`;
+      
+      const techniqueIdeas = sessionData.ideas.filter((idea: any) => 
+        idea.tags && idea.tags.includes(technique.toLowerCase())
+      );
+      
+      if (techniqueIdeas.length > 0) {
+        report += `**Ideas Generated:**\n`;
+        techniqueIdeas.forEach((idea: any, idx: number) => {
+          report += `${idx + 1}. ${idea.title}\n`;
+        });
+        report += `\n`;
+      }
+      
+      report += `---\n\n`;
+    });
+  }
+  
+  report += `## Idea Categorization\n\n`;
+  
+  const immediateOpportunities = sessionData.ideas.filter((idea: any) => 
+    idea.metadata?.feasibility === 'high' && idea.metadata?.impact === 'high'
+  );
+  const futureInnovations = sessionData.ideas.filter((idea: any) => 
+    idea.metadata?.feasibility === 'medium' || idea.metadata?.impact === 'high'
+  );
+  const moonshots = sessionData.ideas.filter((idea: any) => 
+    idea.metadata?.feasibility === 'low' && idea.metadata?.impact === 'high'
+  );
+  
+  if (immediateOpportunities.length > 0) {
+    report += `### Immediate Opportunities\n`;
+    report += `*Ideas ready to implement now*\n\n`;
+    immediateOpportunities.forEach((idea: any, index: number) => {
+      report += `${index + 1}. **${idea.title}**\n`;
+      report += `   - Description: ${idea.description}\n`;
+      report += `   - Why immediate: ${idea.rationale || "High feasibility and impact"}\n`;
+      report += `   - Resources needed: ${idea.metadata?.resources || "Standard development resources"}\n\n`;
+    });
+  }
+  
+  if (futureInnovations.length > 0) {
+    report += `### Future Innovations\n`;
+    report += `*Ideas requiring development/research*\n\n`;
+    futureInnovations.forEach((idea: any, index: number) => {
+      report += `${index + 1}. **${idea.title}**\n`;
+      report += `   - Description: ${idea.description}\n`;
+      report += `   - Development needed: ${idea.metadata?.development || "Research and development required"}\n`;
+      report += `   - Timeline estimate: ${idea.metadata?.timeline || "3-6 months"}\n\n`;
+    });
+  }
+  
+  if (moonshots.length > 0) {
+    report += `### Moonshots\n`;
+    report += `*Ambitious, transformative concepts*\n\n`;
+    moonshots.forEach((idea: any, index: number) => {
+      report += `${index + 1}. **${idea.title}**\n`;
+      report += `   - Description: ${idea.description}\n`;
+      report += `   - Transformative potential: ${idea.metadata?.potential || "High transformative impact"}\n`;
+      report += `   - Challenges to overcome: ${idea.metadata?.challenges || "Significant technical and resource challenges"}\n\n`;
+    });
+  }
+  
+  report += `### Insights & Learnings\n`;
+  report += `*Key realizations from the session*\n\n`;
+  const insights = generateSessionInsights(sessionData);
+  insights.forEach(insight => {
+    report += `- ${insight}\n`;
   });
   report += `\n`;
   
-  report += `## Ideas Generated (${sessionData.ideas.length} total)\n\n`;
-  sessionData.ideas.forEach((idea: any, index: number) => {
-    report += `### ${index + 1}. ${idea.title}\n\n`;
-    report += `${idea.description}\n\n`;
-    if (idea.rationale) {
-      report += `**Rationale:** ${idea.rationale}\n\n`;
-    }
-    if (idea.tags && idea.tags.length > 0) {
-      report += `**Tags:** ${idea.tags.join(", ")}\n\n`;
-    }
-  });
+  report += `## Action Planning\n\n`;
   
+  const topIdeas = sessionData.ideas.slice(0, 3);
+  if (topIdeas.length > 0) {
+    report += `### Top ${Math.min(3, topIdeas.length)} Priority Ideas\n\n`;
+    topIdeas.forEach((idea: any, index: number) => {
+      report += `#### #${index + 1} Priority: ${idea.title}\n\n`;
+      report += `- Rationale: ${idea.rationale || "High potential based on session analysis"}\n`;
+      report += `- Next steps: ${idea.metadata?.nextSteps || "Define detailed requirements and create implementation plan"}\n`;
+      report += `- Resources needed: ${idea.metadata?.resources || "Development team and project management"}\n`;
+      report += `- Timeline: ${idea.metadata?.timeline || "2-4 weeks for initial implementation"}\n\n`;
+    });
+  }
+  
+  report += `## Reflection & Follow-up\n\n`;
+  
+  report += `### What Worked Well\n`;
+  report += `- Interactive brainstorming techniques generated diverse ideas\n`;
+  report += `- Structured approach helped organize thoughts\n`;
+  report += `- Collaborative environment fostered creativity\n\n`;
+  
+  report += `### Areas for Further Exploration\n`;
   if (sessionData.clusters && sessionData.clusters.length > 0) {
-    report += `## Idea Clusters\n\n`;
     sessionData.clusters.forEach((cluster: any) => {
-      report += `### ${cluster.name}\n\n`;
-      report += `${cluster.description}\n\n`;
-      report += `**Priority:** ${cluster.priority}\n\n`;
-      report += `**Ideas in this cluster:**\n`;
-      cluster.ideas.forEach((ideaId: string) => {
-        const idea = sessionData.ideas.find((i: any) => i.id === ideaId);
-        if (idea) {
-          report += `- ${idea.title}\n`;
-        }
-      });
-      report += `\n`;
+      report += `- ${cluster.name}: ${cluster.description}\n`;
     });
+  } else {
+    report += `- Technical feasibility studies for complex ideas\n`;
+    report += `- User research to validate assumptions\n`;
+    report += `- Market analysis for commercial viability\n\n`;
   }
   
-  if (sessionData.scoredIdeas && sessionData.scoredIdeas.length > 0) {
-    report += `## Prioritized Ideas\n\n`;
-    report += `Ideas ranked by priority score (impact × feasibility × effort):\n\n`;
-    
-    sessionData.scoredIdeas.slice(0, 10).forEach((idea: any, index: number) => {
-      report += `### ${index + 1}. ${idea.title} (Priority: ${idea.priority})\n\n`;
-      report += `- **Impact:** ${idea.impact}/10\n`;
-      report += `- **Feasibility:** ${idea.feasibility}/10\n`;
-      report += `- **Effort:** ${idea.effort}/10\n\n`;
-    });
-  }
+  report += `### Recommended Follow-up Techniques\n`;
+  report += `- User interviews to validate top ideas\n`;
+  report += `- Prototyping sessions for technical concepts\n`;
+  report += `- Stakeholder workshops for implementation planning\n\n`;
   
-  if (includeVisualizations) {
-    report += `## Visualizations\n\n`;
-    
-    if (sessionData.ideas.length > 0) {
-      report += `### Ideas by Category\n\n`;
-      report += `\`\`\`mermaid\n`;
-      report += `pie title Ideas by Category\n`;
-      const categories = getCategoryDistribution(sessionData.ideas);
-      categories.forEach(cat => {
-        report += `  "${cat.name}" : ${cat.count}\n`;
-      });
-      report += `\`\`\`\n\n`;
-    }
-    
-    if (sessionData.scoredIdeas && sessionData.scoredIdeas.length > 0) {
-      report += `### Priority Matrix\n\n`;
-      report += `\`\`\`mermaid\n`;
-      report += `quadrantChart\n`;
-      report += `  title Priority Matrix (Impact vs Feasibility)\n`;
-      report += `  x-axis Low Feasibility --> High Feasibility\n`;
-      report += `  y-axis Low Impact --> High Impact\n`;
-      sessionData.scoredIdeas.slice(0, 8).forEach((idea: any) => {
-        report += `  "${idea.title}": [${idea.feasibility}, ${idea.impact}]\n`;
-      });
-      report += `\`\`\`\n\n`;
-    }
-  }
+  report += `### Questions That Emerged\n`;
+  report += `- How do we prioritize ideas with limited resources?\n`;
+  report += `- What are the technical constraints for implementation?\n`;
+  report += `- How do we measure success for each idea?\n\n`;
   
-  report += `## Key Insights\n\n`;
-  report += generateReportInsights(sessionData);
-  report += `\n\n`;
-  
-  report += `## Recommendations\n\n`;
-  report += generateRecommendations(sessionData);
-  report += `\n\n`;
-  
-  report += `## Next Steps\n\n`;
-  report += `1. **Validate top ideas** with user research and market analysis\n`;
-  report += `2. **Create detailed specifications** for high-priority concepts\n`;
-  report += `3. **Develop prototypes** for the most promising ideas\n`;
-  report += `4. **Conduct feasibility studies** for complex technical solutions\n`;
-  report += `5. **Plan implementation roadmap** with clear milestones\n\n`;
+  report += `### Next Session Planning\n`;
+  report += `- **Suggested topics:** Implementation planning, user research, technical feasibility\n`;
+  report += `- **Recommended timeframe:** 1-2 weeks\n`;
+  report += `- **Preparation needed:** Review this report and select top 3 ideas for detailed analysis\n\n`;
   
   report += `---\n\n`;
   report += `*Report generated by Project Assist*\n`;
@@ -258,6 +302,40 @@ function generateReportInsights(sessionData: any): string {
   insights.push(`The combination of ${sessionData.techniquesUsed.join(" and ")} techniques provided comprehensive coverage of the problem space.`);
   
   return insights.join(" ");
+}
+
+function generateSessionInsights(sessionData: any): string[] {
+  const insights = [];
+  
+  if (sessionData.ideas.length > 0) {
+    insights.push(`Generated ${sessionData.ideas.length} diverse ideas through structured brainstorming`);
+  }
+  
+  if (sessionData.techniquesUsed.length > 1) {
+    insights.push(`Multiple techniques (${sessionData.techniquesUsed.join(", ")}) provided comprehensive coverage of the problem space`);
+  }
+  
+  if (sessionData.clusters && sessionData.clusters.length > 0) {
+    insights.push(`Ideas naturally clustered into ${sessionData.clusters.length} thematic groups, indicating clear patterns`);
+  }
+  
+  const highImpactIdeas = sessionData.ideas.filter((idea: any) => idea.metadata?.impact === 'high');
+  if (highImpactIdeas.length > 0) {
+    insights.push(`${highImpactIdeas.length} high-impact ideas identified with significant potential`);
+  }
+  
+  const immediateIdeas = sessionData.ideas.filter((idea: any) => 
+    idea.metadata?.feasibility === 'high' && idea.metadata?.impact === 'high'
+  );
+  if (immediateIdeas.length > 0) {
+    insights.push(`${immediateIdeas.length} ideas are ready for immediate implementation`);
+  }
+  
+  if (sessionData.ideas.length === 0) {
+    insights.push("Session generated foundational understanding - consider follow-up ideation sessions");
+  }
+  
+  return insights;
 }
 
 function generateRecommendations(sessionData: any): string {

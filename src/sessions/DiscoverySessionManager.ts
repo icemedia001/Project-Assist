@@ -57,7 +57,13 @@ To begin, type a command (e.g., @brainstorm)`,
       case 'brainstorm':
         const discoverySystem = await createBrainstormSystem(env.LLM_MODEL, this.userId);
         
-        const initialMessage = `Hi! I'm your brainstorming facilitator. I'll guide the process and you generate the ideas.
+        const initialMessage = args 
+          ? `Hi! I'm your brainstorming facilitator. I'll guide the process and you generate the ideas.
+
+Great! We're brainstorming about: "${args}"
+
+Any constraints or parameters? (e.g., offline-only, budget $50k)`
+          : `Hi! I'm your brainstorming facilitator. I'll guide the process and you generate the ideas.
 
 What are we brainstorming about?`;
         const sessionTitle = title || `Brainstorming Session - ${new Date().toLocaleDateString()}`;
@@ -89,7 +95,13 @@ What are we brainstorming about?`;
       case 'analyst':
         const analystSystem = await createDiscoverySystem(env.LLM_MODEL, this.userId);
         
-        const analystMessage = `Hi! I'm your business analyst. I'm here to help you with market research, competitive analysis, and strategic insights.
+        const analystMessage = args 
+          ? `Hi! I'm your business analyst. I'm here to help you with market research, competitive analysis, and strategic insights.
+
+Great! We're analyzing: "${args}"
+
+What are your research objectives?`
+          : `Hi! I'm your business analyst. I'm here to help you with market research, competitive analysis, and strategic insights.
 
 What would you like to analyze or research today?`;
         const analystTitle = title || `Analysis Session - ${new Date().toLocaleDateString()}`;
@@ -121,7 +133,13 @@ What would you like to analyze or research today?`;
       case 'pm':
         const pmSystem = await createDiscoverySystem(env.LLM_MODEL, this.userId);
         
-        const pmMessage = `Hi! I'm your project manager. I'm here to help you prioritize ideas, plan projects, and create actionable roadmaps.
+        const pmMessage = args 
+          ? `Hi! I'm your project manager. I'm here to help you prioritize ideas, plan projects, and create actionable roadmaps.
+
+Great! We're planning: "${args}"
+
+What are your success criteria?`
+          : `Hi! I'm your project manager. I'm here to help you prioritize ideas, plan projects, and create actionable roadmaps.
 
 What project or ideas would you like to prioritize and plan?`;
         const pmTitle = title || `Project Management Session - ${new Date().toLocaleDateString()}`;
@@ -153,7 +171,13 @@ What project or ideas would you like to prioritize and plan?`;
       case 'architect':
         const architectSystem = await createDiscoverySystem(env.LLM_MODEL, this.userId);
         
-        const architectMessage = `Hi! I'm your technical architect. I'm here to help you design systems, plan technical solutions, and create architecture blueprints.
+        const architectMessage = args 
+          ? `Hi! I'm your technical architect. I'm here to help you design systems, plan technical solutions, and create architecture blueprints.
+
+Great! We're architecting: "${args}"
+
+What are your technical constraints?`
+          : `Hi! I'm your technical architect. I'm here to help you design systems, plan technical solutions, and create architecture blueprints.
 
 What system or technical challenge would you like to architect?`;
         const architectTitle = title || `Architecture Session - ${new Date().toLocaleDateString()}`;
@@ -185,7 +209,13 @@ What system or technical challenge would you like to architect?`;
       case 'validator':
         const validatorSystem = await createDiscoverySystem(env.LLM_MODEL, this.userId);
         
-        const validatorMessage = `Hi! I'm your validation specialist. I'm here to help you assess risks, validate feasibility, and ensure your ideas are sound.
+        const validatorMessage = args 
+          ? `Hi! I'm your validation specialist. I'm here to help you assess risks, validate feasibility, and ensure your ideas are sound.
+
+Great! We're validating: "${args}"
+
+What specific aspects should we assess?`
+          : `Hi! I'm your validation specialist. I'm here to help you assess risks, validate feasibility, and ensure your ideas are sound.
 
 What would you like to validate or assess for risks?`;
         const validatorTitle = title || `Validation Session - ${new Date().toLocaleDateString()}`;

@@ -1,5 +1,50 @@
 @import "tailwindcss";
 
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Prevent scroll chaining between sidebar and main content */
+.overflow-y-auto {
+  overscroll-behavior: contain;
+}
+
+/* Ensure proper flex behavior */
+.flex-1 {
+  min-height: 0;
+}
+
+/* Sidebar specific styles */
+.sidebar-container {
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.sidebar-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-container::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 3px;
+}
+
+/* Main content scroll isolation */
+.main-content {
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
 /* Dark-first design tokens */
 :root {
   /* Core palette */

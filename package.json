@@ -9,7 +9,10 @@
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "bot:discord": "tsx src/bots/discord-bot.ts",
+    "bot:dev": "tsx watch src/bots/discord-bot.ts",
+    "bot:test": "tsx src/bots/test-integration.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.0",
@@ -23,6 +26,7 @@
     "pg": "^8.16.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-markdown": "^10.1.0",
     "redis": "^4.7.0",
     "yaml": "^2.8.1",
     "zod": "^4.1.12"
@@ -41,10 +45,14 @@
     "typescript": "^5.9.3"
   },
   "eslintConfig": {
-    "extends": ["next"],
+    "extends": [
+      "next"
+    ],
     "overrides": [
       {
-        "files": ["src/generated/prisma/wasm.js"],
+        "files": [
+          "src/generated/prisma/wasm.js"
+        ],
         "rules": {
           "@typescript-eslint/no-require-imports": "off"
         }

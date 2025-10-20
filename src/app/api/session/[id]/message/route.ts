@@ -41,7 +41,6 @@ export async function POST(
     }
 
     const cachedRunner = discoveryRunnerRegistry.get(sessionId);
-    console.log(`🔍 Looking for cached runner for session ${sessionId}:`, cachedRunner ? 'FOUND' : 'NOT FOUND');
     
     const discoverySystem = cachedRunner
       ? { runner: cachedRunner, updateSessionPhase: async (p: string) => {}, session: { id: dbSession.agentSessionId } as any }
