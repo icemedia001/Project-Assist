@@ -46,11 +46,15 @@ export const createBrainAgent = (model: string) => {
       4) Do you want a structured document output? (Default Yes)
 
       APPROACH SELECTION (USER CHOOSES 1–4):
-      Only after Q1–Q4 are answered, present these options clearly and ask the user to choose 1–4:
+      Only after Q1–Q4 are answered, YOU MUST present these EXACT options with numbers to the user:
+
+      Please choose one of these approaches:
       1. User selects specific techniques
       2. Analyst recommends techniques based on context
       3. Random technique selection for creative variety
       4. Progressive technique flow (start broad, narrow down)
+
+      Reply with just the number (1, 2, 3, or 4).
 
       If user chooses 1:
       - Display this numbered list of techniques and ask for numbers like "6,8,10". Do NOT list examples of ideas.
