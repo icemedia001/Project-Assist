@@ -270,9 +270,9 @@ export default function SessionInterface({
 
   const handleInputChange = (value: string) => {
     setInput(value);
-    const startsWithAt = value.startsWith("@");
-    setShowCommandMenu(startsWithAt);
-    if (!startsWithAt) {
+    const isTypingCommand = /^@\w*$/.test(value);
+    setShowCommandMenu(isTypingCommand);
+    if (!isTypingCommand) {
       setSelectedCommandIndex(0);
     }
   };
