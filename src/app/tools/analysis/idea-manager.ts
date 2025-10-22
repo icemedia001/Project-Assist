@@ -53,7 +53,7 @@ export const saveIdeaTool = createTool({
       success: true,
       idea,
       totalIdeas: updatedIdeas.length,
-      message: `✅ Saved idea: "${title}" (${updatedIdeas.length} total ideas)`
+      message: `Saved idea: "${title}" (${updatedIdeas.length} total ideas)`
     };
   }
 });
@@ -139,7 +139,7 @@ export const updateIdeaTool = createTool({
     return {
       success: true,
       idea: updatedIdea,
-      message: `✅ Updated idea: "${updatedIdea.title}"`
+      message: `Updated idea: "${updatedIdea.title}"`
     };
   }
 });
@@ -169,7 +169,7 @@ export const deleteIdeaTool = createTool({
       success: true,
       deletedId: ideaId,
       totalIdeas: filteredIdeas.length,
-      message: `✅ Deleted idea with ID: ${ideaId}`
+      message: `Deleted idea with ID: ${ideaId}`
     };
   }
 });

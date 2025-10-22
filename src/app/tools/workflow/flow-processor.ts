@@ -50,7 +50,7 @@ export const createWorkflowTool = createTool({
     return {
       success: true,
       workflow,
-      message: `✅ Created workflow: "${workflowName}" with ${steps.length} steps`
+      message: `Created workflow: "${workflowName}" with ${steps.length} steps`
     };
   }
 });
@@ -114,7 +114,7 @@ export const executeWorkflowStepTool = createTool({
       success: true,
       stepExecution,
       workflow,
-      message: `🚀 Executing step: "${step.name}" using ${step.agent} agent`
+      message: `Executing step: "${step.name}" using ${step.agent} agent`
     };
   }
 });
@@ -184,7 +184,7 @@ export const completeWorkflowStepTool = createTool({
       stepExecution,
       workflow,
       isWorkflowComplete: workflow.status === "completed",
-      message: `✅ Completed step: "${stepId}"${workflow.status === "completed" ? " - Workflow complete!" : ""}`
+      message: `Completed step: "${stepId}"${workflow.status === "completed" ? " - Workflow complete!" : ""}`
     };
   }
 });

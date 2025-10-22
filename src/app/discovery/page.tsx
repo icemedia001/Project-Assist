@@ -36,11 +36,11 @@ export default function DiscoveryPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="h-screen flex flex-col">
       <Navigation />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-8">
+      <main className="flex-1 overflow-hidden">
+        <div className="h-full">
           <SessionInterface
             sessionId={sessionId}
             onSessionStart={handleSessionStart}

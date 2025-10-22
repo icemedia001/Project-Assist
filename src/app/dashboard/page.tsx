@@ -197,7 +197,7 @@ export default function Dashboard() {
               </div>
             ) : filteredSessions.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-[color:var(--muted)] text-6xl mb-4">📝</div>
+                <div className="text-[color:var(--muted)] text-6xl mb-4">No</div>
                 <h3 className="text-lg font-medium mb-2">No sessions yet</h3>
                 <p className="text-[color:var(--muted)] mb-6">
                   Start your first discovery session to begin exploring ideas.
@@ -237,9 +237,9 @@ export default function Dashboard() {
                         )}
                         
                         <div className="flex items-center space-x-4 text-sm text-[color:var(--muted)]">
-                          <span>💡 {session.ideasCount} ideas</span>
-                          <span>🎯 {session.clustersCount} clusters</span>
-                          <span>📅 {new Date(session.updatedAt).toLocaleDateString()}</span>
+                        <span>{session.ideasCount} ideas</span>
+                          <span>{session.clustersCount} clusters</span>
+                          <span>{new Date(session.updatedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
                       

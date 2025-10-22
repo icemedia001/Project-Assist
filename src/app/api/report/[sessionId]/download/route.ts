@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/app/config/db";
+import { generateDiscoveryReport } from "@/app/tools/output/report-generation";
 
 export async function GET(
   request: NextRequest,
@@ -22,7 +23,12 @@ export async function GET(
 
     const discoverySession = await prisma.discoverySession.findUnique({
       where: { id: sessionId },
-      select: { userId: true, title: true }
+      include: { 
+        agentSession: true,
+        ideas: true,
+        clusters: true,
+        recommendations: true
+      }
     });
 
     if (!discoverySession || discoverySession.userId !== session.user.id) {
@@ -32,22 +38,30 @@ export async function GET(
       );
     }
 
-    const artifact = await prisma.artifact.findFirst({
-      where: {
-        userId: session.user.id,
-        sessionId: sessionId,
-        name: "discovery-report.md",
-        type: "text"
-      },
-      orderBy: { createdAt: "desc" }
-    });
+    const sessionData = {
+      problemStatement: discoverySession.problemStatement || "Discovery Session",
+      techniquesUsed: discoverySession.techniquesUsed || [],
+      ideas: discoverySession.ideas.map(idea => ({
+        id: idea.id,
+        title: idea.title,
+        description: idea.description,
+        rationale: idea.rationale,
+        category: (idea.metadata as any)?.category,
+        tags: (idea.metadata as any)?.tags || []
+      })),
+      clusters: discoverySession.clusters.map(cluster => ({
+        id: cluster.id,
+        name: cluster.name,
+        description: cluster.description,
+        ideas: [],
+        theme: cluster.color,
+        priority: "medium"
+      })),
+      context: (discoverySession.metadata as any)?.context || ""
+    };
 
-    if (!artifact) {
-      return NextResponse.json(
-        { error: "Report not found" },
-        { status: 404 }
-      );
-    }
+
+    const reportContent = generateDiscoveryReport(sessionData, format);
 
     const headers = new Headers();
     const filename = `discovery-report-${sessionId.slice(0, 8)}.${format}`;
@@ -66,7 +80,7 @@ export async function GET(
       headers.set("Content-Disposition", `attachment; filename="${filename}"`);
     }
 
-    return new NextResponse(artifact.content, {
+    return new NextResponse(reportContent, {
       status: 200,
       headers
     });
