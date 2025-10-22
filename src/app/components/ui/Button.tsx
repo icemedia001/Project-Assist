@@ -3,7 +3,7 @@
 import React from "react";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "destructive";
   size?: "sm" | "md";
 };
 
@@ -21,6 +21,8 @@ export default function Button({
     styles = "bg-[var(--accent)] text-[var(--accent-contrast)] hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]";
   } else if (variant === "secondary") {
     styles = "bg-[color:var(--surface)] text-[color:var(--text)] border border-[color:var(--border)] hover:bg-[#1b2233]";
+  } else if (variant === "destructive") {
+    styles = "bg-red-600 text-white hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600";
   } else {
     styles = "bg-transparent text-[color:var(--text)] hover:bg-[#1b2233]";
   }
