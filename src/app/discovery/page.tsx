@@ -2,13 +2,14 @@
 
 import { useAuth } from "@/app/hooks/useAuth";
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Navigation from "@/app/components/Navigation";
 import SessionInterface from "./components/SessionInterface";
 
 export default function DiscoveryPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(false);
 
@@ -33,6 +34,11 @@ export default function DiscoveryPage() {
 
   const handleSessionStart = (id: string) => {
     setSessionId(id);
+    if (id) {
+      router.push(`/discovery?session=${id}`);
+    } else {
+      router.push('/discovery');
+    }
   };
 
   return (
