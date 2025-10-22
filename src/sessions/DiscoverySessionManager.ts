@@ -299,7 +299,10 @@ What are we brainstorming about?`
     type DiscoverySystem = { runner: DiscoveryRunner; session: { id: string } };
     
     const dbSession = await prisma.discoverySession.findUnique({
-      where: { id: sessionId, userId: this.userId }
+      where: { id: sessionId, userId: this.userId },
+      include: {
+        agentSession: true
+      }
     });
 
     if (!dbSession) {
@@ -314,10 +317,15 @@ What are we brainstorming about?`
     if (cachedRunner) {
       discoverySystem = { runner: cachedRunner as DiscoveryRunner, session: { id: sessionId } };
     } else {
-      const newSystem = await createDiscoverySystem(env.LLM_MODEL, this.userId);
+      const adkSessionId = dbSession.agentSession.sessionId;
+      const newSystem = await this.restoreDiscoverySystem(adkSessionId, dbSession.agentSession.agentName);
       discoverySystem = newSystem as unknown as DiscoverySystem;
       
       await this.restoreConversationContext(sessionId, dbSession.currentPhase, discoverySystem.runner);
+      
+      try {
+        discoveryRunnerRegistry.set(sessionId, discoverySystem.runner);
+      } catch {}
     }
 
     await prisma.message.create({
@@ -330,12 +338,6 @@ What are we brainstorming about?`
     });
 
     const response = await discoverySystem.runner.ask(message);
-
-    if (!cachedRunner && discoverySystem.runner) {
-      try {
-        discoveryRunnerRegistry.set(sessionId, discoverySystem.runner);
-      } catch {}
-    }
 
     const formattedResponse = this.formatResponse(response);
 
@@ -459,6 +461,17 @@ What are we brainstorming about?`
     }));
   }
 
+  private async restoreDiscoverySystem(adkSessionId: string, agentName: string): Promise<{
+    runner: { ask: (message: string) => Promise<string> };
+    session: { id: string };
+  }> {
+    if (agentName === 'brainstorm_system') {
+      return await createBrainstormSystem(env.LLM_MODEL, this.userId);
+    } else {
+      return await createDiscoverySystem(env.LLM_MODEL, this.userId);
+    }
+  }
+
   private async restoreConversationContext(
     sessionId: string, 
     currentPhase: string, 
@@ -466,30 +479,47 @@ What are we brainstorming about?`
   ): Promise<void> {
     const previousMessages = await prisma.message.findMany({
       where: { discoverySessionId: sessionId },
-      orderBy: { createdAt: "asc" },
-      take: 20
+      orderBy: { createdAt: "asc" }
     });
     
     if (previousMessages.length > 0) {
-      const contextMessages = previousMessages
-        .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+      const userMessages = previousMessages.filter(msg => msg.type === 'user');
+      const agentMessages = previousMessages.filter(msg => msg.type === 'agent');
+      
+      const lastUserMessage = userMessages[userMessages.length - 1];
+      const lastAgentMessage = agentMessages[agentMessages.length - 1];
+      
+      const conversationSummary = previousMessages
+        .slice(-10)
+        .map(msg => `${msg.type === 'user' ? 'User' : 'You'}: ${msg.content}`)
         .join('\n\n');
       
       const phase = currentPhase || 'brainstorming';
-      const contextPrompt = `[SYSTEM: Restoring session context]
+      
+      const contextPrompt = `[SYSTEM CONTEXT RESTORATION - DO NOT RESPOND TO THIS MESSAGE]
 
-You are continuing an existing ${phase} session. Below is the conversation history so far:
+You are resuming an active ${phase} session that was temporarily disconnected.
 
-${contextMessages}
+CONVERSATION HISTORY (last 10 messages):
+${conversationSummary}
 
-IMPORTANT REMINDERS:
-- You are a FACILITATOR, not an idea generator
-- Ask questions to guide the user, don't provide answers
-- Wait for the user's response before proceeding
-- Continue naturally from where you left off
-- Stay in your role as a guide/facilitator
+YOUR LAST RESPONSE WAS:
+"${lastAgentMessage?.content || 'Starting conversation'}"
 
-The user will send their next message now. Continue the conversation naturally.`;
+USER'S LAST MESSAGE WAS:
+"${lastUserMessage?.content || 'Starting conversation'}"
+
+CRITICAL INSTRUCTIONS FOR CONTINUATION:
+1. You have full context of the above conversation
+2. Continue EXACTLY where you left off - do not restart or repeat
+3. Maintain the same tone, approach, and facilitation style
+4. Reference specific points from the conversation when relevant
+5. Do NOT greet the user again or ask already-answered questions
+6. The user is about to send their next message - respond naturally to it
+7. You are a FACILITATOR, not an idea generator
+8. Stay in your role as a guide/facilitator
+
+The session is now restored. The user will send their next message.`;
       
       await runner.ask(contextPrompt);
     }
