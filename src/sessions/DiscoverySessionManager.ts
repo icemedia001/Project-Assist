@@ -4,6 +4,7 @@ import { env } from "../app/config/env";
 import { z } from "zod";
 import type { Prisma } from "../generated/prisma";
 import { discoveryRunnerRegistry } from "../app/sessions/DiscoveryRunnerRegistry";
+import { HELP_RESPONSE, parseCommand } from "../constants/commands";
 
 const SessionStartSchema = z.object({
   problemStatement: z.string().min(1).max(1000),
@@ -35,16 +36,7 @@ export class DiscoverySessionManager {
         return {
           sessionId: '',
           agentSessionId: '',
-          response: `Available Commands:
-
-• @help - Show all available commands and how to use them
-• @brainstorm - Start an interactive brainstorming session with guided techniques
-• @analyst - Start a business analysis session for market research and competitive analysis
-• @pm - Start a project management session for idea prioritization and planning
-• @architect - Start a technical architecture session for system design
-• @validator - Start a validation session for risk assessment and feasibility
-
-To begin, type a command (e.g., @brainstorm)`,
+          response: HELP_RESPONSE,
           phase: "help",
           nextSteps: [
             "Type @brainstorm to start a brainstorming session",
@@ -171,14 +163,26 @@ What project or ideas would you like to prioritize and plan?`;
         const architectSystem = await createDiscoverySystem(env.LLM_MODEL, this.userId);
         
         const architectMessage = args 
-        ? `Hi! I'm your technical architect. I'm here to help you design systems, plan technical solutions, and create architecture blueprints.
+          ? `Hi! I'm Willam, your Architect. I'll help you design the technical architecture for: "${args}"
 
-Great! We're architecting: "${args}"
+Please choose your architecture approach:
 
-What are your technical constraints?`
-        : `Hi! I'm your technical architect. I'm here to help you design systems, plan technical solutions, and create architecture blueprints.
+1. Backend Architecture - Design server-side systems, APIs, databases
+2. Frontend Architecture - Design client-side UI, state management, components
+3. Full-Stack Architecture - Design complete end-to-end application
+4. Brownfield Architecture - Improve or refactor existing systems
 
-What system or technical challenge would you like to architect?`;
+Reply with just the number (1, 2, 3, or 4).`
+          : `Hi! I'm William, your Architect. I'll help you design technical architecture.
+
+Please choose your architecture approach:
+
+1. Backend Architecture - Design server-side systems, APIs, databases
+2. Frontend Architecture - Design client-side UI, state management, components
+3. Full-Stack Architecture - Design complete end-to-end application
+4. Brownfield Architecture - Improve or refactor existing systems
+
+Reply with just the number (1, 2, 3, or 4).`;
         const architectTitle = title || `Architecture Session - ${new Date().toLocaleDateString()}`;
         
         const architectDbSession = await architectSystem.saveSessionToDatabase(
@@ -199,9 +203,9 @@ What system or technical challenge would you like to architect?`;
           response: this.formatResponse(architectResponse),
           phase: "architecture",
           nextSteps: [
-            "Share your technical requirements", 
-            "Define system constraints", 
-            "Create architecture design"
+            "Choose architecture approach (1-4)", 
+            "Answer clarifying questions", 
+            "Review architecture recommendations"
           ]
         };
         
@@ -293,6 +297,11 @@ What are we brainstorming about?`
     phase: string;
     metadata?: Record<string, unknown>;
   }> {
+    const parsedCommand = parseCommand(message);
+    if (parsedCommand) {
+      return await this.handleAgentSwitch(sessionId, parsedCommand.command, parsedCommand.args);
+    }
+
     const cachedRunner = discoveryRunnerRegistry.get(sessionId);
     type DiscoveryRunner = { ask: (message: string) => Promise<string> };
     type DiscoverySystem = { runner: DiscoveryRunner; session: { id: string } };
@@ -471,6 +480,62 @@ What are we brainstorming about?`
   }
 
 
+
+  private async handleAgentSwitch(
+    currentSessionId: string, 
+    command: string, 
+    args: string
+  ): Promise<{
+    response: string;
+    phase: string;
+    metadata?: Record<string, unknown>;
+  }> {
+    const currentSession = await prisma.discoverySession.findUnique({
+      where: { id: currentSessionId, userId: this.userId },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        }
+      }
+    });
+
+    if (!currentSession) {
+      throw new Error('Current session not found');
+    }
+
+    const newSessionResult = await this.startSessionWithCommand(command, args);
+    
+    const newRunner = discoveryRunnerRegistry.get(newSessionResult.sessionId);
+    
+    if (newRunner && currentSession.messages.length > 0) {
+      const contextMessage = `[CONTEXT FROM PREVIOUS SESSION]
+
+Topic: ${currentSession.problemStatement}
+Previous Phase: ${currentSession.currentPhase}
+
+Recent conversation summary:
+${currentSession.messages
+  .reverse()
+  .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content.substring(0, 200)}${msg.content.length > 200 ? '...' : ''}`)
+  .join('\n')}
+
+The user has now switched to the ${command} phase. Continue from this context and provide architecture guidance based on the topic above.`;
+
+
+      await newRunner.ask(contextMessage);
+    }
+
+    return {
+      response: newSessionResult.response,
+      phase: newSessionResult.phase,
+      metadata: {
+        sessionId: newSessionResult.sessionId,
+        agentSessionId: newSessionResult.agentSessionId,
+        transferredFrom: currentSessionId
+      }
+    };
+  }
 
   private formatResponse(response: string): string {
     return response

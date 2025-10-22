@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import ReactMarkdown from "react-markdown";
 import SessionSidebar from "./SessionSidebar";
+import { COMMAND_OPTIONS, WELCOME_MESSAGE, parseCommand } from "../../../constants/commands";
 
 interface SessionInterfaceProps {
   sessionId: string | null;
@@ -41,30 +42,11 @@ export default function SessionInterface({
   const [sessionEnded, setSessionEnded] = useState(false);
   const [reportData, setReportData] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const commandOptions = [
-    { key: "help", label: "@help – Show all available commands" },
-    { key: "brainstorm", label: "@brainstorm – Start brainstorming session" },
-    { key: "analyst", label: "@analyst – Start business analysis session" },
-    { key: "pm", label: "@pm – Start project management session" },
-    { key: "architect", label: "@architect – Start architecture session" },
-    { key: "validator", label: "@validator – Start validation session" },
-  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const parseCommand = (input: string) => {
-    const commandPattern = /^@(\w+)(\s+.*)?$/;
-    const match = input.trim().match(commandPattern);
-    if (match) {
-      return {
-        command: match[1].toLowerCase(),
-        args: match[2]?.trim() || ""
-      };
-    }
-    return null;
-  };
 
   useEffect(() => {
     scrollToBottom();
@@ -132,7 +114,7 @@ export default function SessionInterface({
         {
           id: "welcome",
           type: "system",
-          content: "Welcome to Project Assist!\n\nAvailable Commands:\n• @help - Show all available commands and how to use them\n• @brainstorm - Start an interactive brainstorming session with guided techniques\n• @analyst - Start a business analysis session for market research and competitive analysis\n• @pm - Start a project management session for idea prioritization and planning\n• @architect - Start a technical architecture session for system design\n• @validator - Start a validation session for risk assessment and feasibility\n\nTo begin, type a command (e.g., @brainstorm)",
+          content: WELCOME_MESSAGE,
           timestamp: new Date(),
         },
       ]);
@@ -263,9 +245,9 @@ export default function SessionInterface({
 
   const filteredCommands = (() => {
     const atMatch = input.match(/^@(\w*)$/) || input.match(/^@(\w*)\s.*$/);
-    if (!atMatch) return commandOptions;
+    if (!atMatch) return COMMAND_OPTIONS;
     const typed = (atMatch[1] || "").toLowerCase();
-    return commandOptions.filter(opt => opt.key.startsWith(typed));
+    return COMMAND_OPTIONS.filter(opt => opt.key.startsWith(typed));
   })();
 
   const handleInputChange = (value: string) => {
