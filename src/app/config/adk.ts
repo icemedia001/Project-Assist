@@ -79,7 +79,6 @@ export async function createSessionService(): Promise<BaseSessionService> {
       
       const service = createDatabaseSessionService(adkConfig.sessionService.connectionString);
       if (isDevelopment) {
-        console.log('Using database session service');
       }
       return service;
     }
@@ -87,7 +86,6 @@ export async function createSessionService(): Promise<BaseSessionService> {
     return new InMemorySessionService();
   } catch (error) {
     console.error('Failed to create session service:', error);
-    console.log('Falling back to in-memory session service');
     return new InMemorySessionService();
   }
 }

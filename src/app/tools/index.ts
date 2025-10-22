@@ -1,19 +1,3 @@
-export { scamperTool } from './techniques/scamper';
-export { sixHatsTool } from './techniques/six-hats';
-export { mindMapTool } from './techniques/mind-mapping';
-export { rolestormingTool } from './techniques/rolestorming';
-export { facilitationTools } from './techniques/facilitation-tools';
-export { clusterIdeasTool } from './analysis/clustering';
-export { scoreIdeasTool } from './analysis/scoring';
-export { ideaManagementTools } from './analysis/idea-manager';
-export { generateDiscoveryReportTool } from './output/report-generation';
-export { techStackTool } from './architecture/tech-stack';
-export { architectureDesignTool } from './architecture/architecture-design';
-export { riskAssessmentTool } from './validation/risk-assessment';
-export { feasibilityCheckTool } from './validation/feasibility-check';
-export { selectTechniquesTool } from './brainstorming/technique-selector';
-export { completeTechniqueTool } from './brainstorming/technique-progress';
-export { workflowTools } from './workflow/flow-processor';
 import { scamperTool } from './techniques/scamper';
 import { sixHatsTool } from './techniques/six-hats';
 import { mindMapTool } from './techniques/mind-mapping';
@@ -30,6 +14,7 @@ import { feasibilityCheckTool } from './validation/feasibility-check';
 import { selectTechniquesTool } from './brainstorming/technique-selector';
 import { completeTechniqueTool } from './brainstorming/technique-progress';
 import { workflowTools } from './workflow/flow-processor';
+import { generatePrdTool, createEpicTool, validatePrdTool } from './pm';
 
 export const techniqueTools = () => [
   scamperTool,
@@ -77,7 +62,8 @@ export const analystAgentTools = () => [clusterIdeasTool];
 
 export const pmAgentTools = () => [
   scoreIdeasTool,
-  clusterIdeasTool
+  clusterIdeasTool,
+  ...pmTools()
 ];
 
 export const architectAgentTools = () => [
@@ -88,7 +74,31 @@ export const validatorAgentTools = () => [
   ...validationTools()
 ];
 
+export const pmTools = () => [
+  generatePrdTool,
+  createEpicTool,
+  validatePrdTool
+];
+
 export const coordinatorTools = () => [
   generateDiscoveryReportTool,
   ...workflowTools()
 ];
+
+export { scamperTool } from './techniques/scamper';
+export { sixHatsTool } from './techniques/six-hats';
+export { mindMapTool } from './techniques/mind-mapping';
+export { rolestormingTool } from './techniques/rolestorming';
+export { facilitationTools } from './techniques/facilitation-tools';
+export { clusterIdeasTool } from './analysis/clustering';
+export { scoreIdeasTool } from './analysis/scoring';
+export { ideaManagementTools } from './analysis/idea-manager';
+export { generateDiscoveryReportTool } from './output/report-generation';
+export { techStackTool } from './architecture/tech-stack';
+export { architectureDesignTool } from './architecture/architecture-design';
+export { riskAssessmentTool } from './validation/risk-assessment';
+export { feasibilityCheckTool } from './validation/feasibility-check';
+export { selectTechniquesTool } from './brainstorming/technique-selector';
+export { completeTechniqueTool } from './brainstorming/technique-progress';
+export { workflowTools } from './workflow/flow-processor';
+export { generatePrdTool, createEpicTool, validatePrdTool } from './pm';
