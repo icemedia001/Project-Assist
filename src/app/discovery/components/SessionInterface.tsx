@@ -270,9 +270,9 @@ export default function SessionInterface({
 
   const handleInputChange = (value: string) => {
     setInput(value);
-    const startsWithAt = value.startsWith("@");
-    setShowCommandMenu(startsWithAt);
-    if (!startsWithAt) {
+    const isTypingCommand = /^@\w*$/.test(value);
+    setShowCommandMenu(isTypingCommand);
+    if (!isTypingCommand) {
       setSelectedCommandIndex(0);
     }
   };
@@ -316,7 +316,6 @@ export default function SessionInterface({
   };
 
   const handleSessionDelete = (deletedSessionId: string) => {
-    // If the deleted session was the current one, clear the current session
     if (sessionId === deletedSessionId) {
       onSessionStart('');
       setMessages([]);

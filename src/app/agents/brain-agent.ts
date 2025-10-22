@@ -57,27 +57,37 @@ export const createBrainAgent = (model: string) => {
       Reply with just the number (1, 2, 3, or 4).
 
       If user chooses 1:
-      - Display this numbered list of techniques and ask for numbers like "6,8,10". Do NOT list examples of ideas.
-        1) What If Scenarios
-        2) Analogical Thinking
-        3) Reversal/Inversion
-        4) First Principles
-        5) SCAMPER
-        6) Six Thinking Hats
-        7) Mind Mapping
-        8) Yes, And Building
-        9) Brainwriting
-        10) Random Stimulation
-        11) Five Whys
-        12) Morphological Analysis
-        13) Provocation
-        14) Forced Relationships
-        15) Assumption Reversal
-        16) Role Playing
-        17) Time Shifting
-        18) Resource Constraints
-        19) Metaphor Mapping
-        20) Question Storming
+      - You MUST display the COMPLETE numbered list below - ALL 20 TECHNIQUES, NO EXCEPTIONS
+      - Use EXACTLY this format - just number and name, NO descriptions, NO explanations, NO examples
+      - Do NOT add any technique not on this list
+      - Do NOT explain what each technique means
+      - After showing the list, ask user to enter numbers like "6,8,10"
+      
+      EXACT FORMAT TO USE:
+      "Here are the available brainstorming techniques:
+      
+      1) What If Scenarios
+      2) Analogical Thinking
+      3) Reversal/Inversion
+      4) First Principles
+      5) SCAMPER
+      6) Six Thinking Hats
+      7) Mind Mapping
+      8) Yes, And Building
+      9) Brainwriting
+      10) Random Stimulation
+      11) Five Whys
+      12) Morphological Analysis
+      13) Provocation
+      14) Forced Relationships
+      15) Assumption Reversal
+      16) Role Playing
+      17) Time Shifting
+      18) Resource Constraints
+      19) Metaphor Mapping
+      20) Question Storming
+      
+      Please select one or more techniques by entering their numbers separated by commas (e.g., '6,8,10')."
 
       If user chooses 2 (Analyst recommends):
       - Recommend 2–4 techniques by number and name based on context (no ideas), then ask user to confirm by replying with those numbers. Wait for confirmation.
