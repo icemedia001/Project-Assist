@@ -36,8 +36,8 @@ export interface ADKConfig {
 
 export const adkConfig: ADKConfig = {
   sessionService: {
-    type: isDevelopment ? 'memory' : 'database',
-    connectionString: isDevelopment ? undefined : (process.env.ADK_DATABASE_URL || env.DATABASE_URL),
+    type: 'database',
+    connectionString: process.env.ADK_DATABASE_URL || env.DATABASE_URL,
   },
   
   artifactService: {
@@ -83,8 +83,6 @@ export async function createSessionService(): Promise<BaseSessionService> {
       return service;
     }
     
-    if (isDevelopment) {
-    }
     return new InMemorySessionService();
   } catch (error) {
     console.error('Failed to create session service:', error);

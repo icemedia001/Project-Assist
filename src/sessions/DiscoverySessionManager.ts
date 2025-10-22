@@ -134,12 +134,12 @@ What would you like to analyze or research today?`;
         const pmSystem = await createDiscoverySystem(env.LLM_MODEL, this.userId);
         
         const pmMessage = args 
-          ? `Hi! I'm your project manager. I'm here to help you prioritize ideas, plan projects, and create actionable roadmaps.
+        ? `Hi! I'm your project manager. I'm here to help you prioritize ideas, plan projects, and create actionable roadmaps.
 
 Great! We're planning: "${args}"
 
 What are your success criteria?`
-          : `Hi! I'm your project manager. I'm here to help you prioritize ideas, plan projects, and create actionable roadmaps.
+        : `Hi! I'm your project manager. I'm here to help you prioritize ideas, plan projects, and create actionable roadmaps.
 
 What project or ideas would you like to prioritize and plan?`;
         const pmTitle = title || `Project Management Session - ${new Date().toLocaleDateString()}`;
@@ -172,12 +172,12 @@ What project or ideas would you like to prioritize and plan?`;
         const architectSystem = await createDiscoverySystem(env.LLM_MODEL, this.userId);
         
         const architectMessage = args 
-          ? `Hi! I'm your technical architect. I'm here to help you design systems, plan technical solutions, and create architecture blueprints.
+        ? `Hi! I'm your technical architect. I'm here to help you design systems, plan technical solutions, and create architecture blueprints.
 
 Great! We're architecting: "${args}"
 
 What are your technical constraints?`
-          : `Hi! I'm your technical architect. I'm here to help you design systems, plan technical solutions, and create architecture blueprints.
+        : `Hi! I'm your technical architect. I'm here to help you design systems, plan technical solutions, and create architecture blueprints.
 
 What system or technical challenge would you like to architect?`;
         const architectTitle = title || `Architecture Session - ${new Date().toLocaleDateString()}`;
@@ -297,9 +297,6 @@ What are we brainstorming about?`
     const cachedRunner = discoveryRunnerRegistry.get(sessionId);
     type DiscoveryRunner = { ask: (message: string) => Promise<string> };
     type DiscoverySystem = { runner: DiscoveryRunner; session: { id: string } };
-    const discoverySystem: DiscoverySystem = cachedRunner
-      ? { runner: cachedRunner as DiscoveryRunner, session: { id: sessionId } }
-      : await createDiscoverySystem(env.LLM_MODEL, this.userId);
     
     const dbSession = await prisma.discoverySession.findUnique({
       where: { id: sessionId, userId: this.userId }
@@ -313,6 +310,25 @@ What are we brainstorming about?`
       throw new Error('Session is already completed');
     }
 
+    let discoverySystem: DiscoverySystem;
+    if (cachedRunner) {
+      discoverySystem = { runner: cachedRunner as DiscoveryRunner, session: { id: sessionId } };
+    } else {
+      const newSystem = await createDiscoverySystem(env.LLM_MODEL, this.userId);
+      discoverySystem = newSystem as unknown as DiscoverySystem;
+      
+      await this.restoreConversationContext(sessionId, dbSession.currentPhase, discoverySystem.runner);
+    }
+
+    await prisma.message.create({
+      data: {
+        discoverySessionId: sessionId,
+        type: "user",
+        content: message,
+        phase: dbSession.currentPhase
+      }
+    });
+
     const response = await discoverySystem.runner.ask(message);
 
     if (!cachedRunner && discoverySystem.runner) {
@@ -320,6 +336,17 @@ What are we brainstorming about?`
         discoveryRunnerRegistry.set(sessionId, discoverySystem.runner);
       } catch {}
     }
+
+    const formattedResponse = this.formatResponse(response);
+
+    await prisma.message.create({
+      data: {
+        discoverySessionId: sessionId,
+        type: "agent",
+        content: formattedResponse,
+        phase: dbSession.currentPhase
+      }
+    });
 
     await prisma.discoverySession.update({
       where: { id: sessionId },
@@ -333,7 +360,7 @@ What are we brainstorming about?`
       });
     
     return {
-      response: this.formatResponse(response),
+      response: formattedResponse,
       phase: dbSession.currentPhase,
       metadata: {
         sessionId,
@@ -430,6 +457,42 @@ What are we brainstorming about?`
       createdAt: session.createdAt,
       ideasCount: session._count.ideas
     }));
+  }
+
+  private async restoreConversationContext(
+    sessionId: string, 
+    currentPhase: string, 
+    runner: { ask: (message: string) => Promise<string> }
+  ): Promise<void> {
+    const previousMessages = await prisma.message.findMany({
+      where: { discoverySessionId: sessionId },
+      orderBy: { createdAt: "asc" },
+      take: 20
+    });
+    
+    if (previousMessages.length > 0) {
+      const contextMessages = previousMessages
+        .map(msg => `${msg.type === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+        .join('\n\n');
+      
+      const phase = currentPhase || 'brainstorming';
+      const contextPrompt = `[SYSTEM: Restoring session context]
+
+You are continuing an existing ${phase} session. Below is the conversation history so far:
+
+${contextMessages}
+
+IMPORTANT REMINDERS:
+- You are a FACILITATOR, not an idea generator
+- Ask questions to guide the user, don't provide answers
+- Wait for the user's response before proceeding
+- Continue naturally from where you left off
+- Stay in your role as a guide/facilitator
+
+The user will send their next message now. Continue the conversation naturally.`;
+      
+      await runner.ask(contextPrompt);
+    }
   }
 
   private formatResponse(response: string): string {

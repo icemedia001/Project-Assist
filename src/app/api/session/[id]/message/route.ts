@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/api/auth/[...nextauth]/route";
-import { createDiscoverySystem } from "../../../../agents/discovery-factory";
-import { discoveryRunnerRegistry } from "../../../../sessions/DiscoveryRunnerRegistry";
-import { prisma } from "../../../../config/db";
+import { DiscoverySessionManager } from "../../../../../sessions/DiscoverySessionManager";
 
 export async function POST(
   request: NextRequest,
@@ -18,7 +16,7 @@ export async function POST(
       );
     }
 
-    const { message, phase } = await request.json();
+    const { message } = await request.json();
     const { id: sessionId } = await params;
 
     if (!message) {
@@ -28,64 +26,13 @@ export async function POST(
       );
     }
 
-    const dbSession = await prisma.discoverySession.findUnique({
-      where: { id: sessionId },
-      include: { agentSession: true }
-    });
-
-    if (!dbSession || dbSession.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Session not found" },
-        { status: 404 }
-      );
-    }
-
-    const cachedRunner = discoveryRunnerRegistry.get(sessionId);
-    
-    const discoverySystem = cachedRunner
-      ? { runner: cachedRunner, updateSessionPhase: async (p: string) => {}, session: { id: dbSession.agentSessionId } as any }
-      : await createDiscoverySystem(undefined, session.user.id);
-    
-    if (phase && phase !== dbSession.currentPhase) {
-      await discoverySystem.updateSessionPhase(phase);
-    }
-
-    await prisma.message.create({
-      data: {
-        discoverySessionId: sessionId,
-        type: "user",
-        content: message,
-        phase: dbSession.currentPhase
-      }
-    });
-
-    const response = await discoverySystem.runner.ask(message);
-
-    if (!cachedRunner) {
-      discoveryRunnerRegistry.set(sessionId, discoverySystem.runner);
-    }
-
-    let newPhase = phase || dbSession.currentPhase;
-
-    if (newPhase !== dbSession.currentPhase) {
-      await discoverySystem.updateSessionPhase(newPhase);
-    }
-
-    const formattedResponse = formatResponse(response);
-
-    await prisma.message.create({
-      data: {
-        discoverySessionId: sessionId,
-        type: "agent",
-        content: formattedResponse,
-        phase: newPhase
-      }
-    });
+    const sessionManager = new DiscoverySessionManager(session.user.id);
+    const result = await sessionManager.continueSession(sessionId, message);
 
     return NextResponse.json({
-      response: formattedResponse,
-      phase: newPhase,
-      nextSteps: getNextStepsForPhase(newPhase)
+      response: result.response,
+      phase: result.phase,
+      nextSteps: getNextStepsForPhase(result.phase)
     });
 
   } catch (error) {
