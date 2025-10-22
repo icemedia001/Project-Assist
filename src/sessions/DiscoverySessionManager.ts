@@ -1,5 +1,4 @@
-import { createDiscoverySystem } from "../app/agents/discovery-factory";
-import { createBrainstormSystem } from "../app/agents/discovery-factory";
+import { createDiscoverySystem, createBrainstormSystem, restoreDiscoverySystem, restoreBrainstormSystem } from "../app/agents/discovery-factory";
 import { prisma } from "../app/config/db";
 import { env } from "../app/config/env";
 import { z } from "zod";
@@ -321,7 +320,6 @@ What are we brainstorming about?`
       const newSystem = await this.restoreDiscoverySystem(adkSessionId, dbSession.agentSession.agentName);
       discoverySystem = newSystem as unknown as DiscoverySystem;
       
-      await this.restoreConversationContext(sessionId, dbSession.currentPhase, discoverySystem.runner);
       
       try {
         discoveryRunnerRegistry.set(sessionId, discoverySystem.runner);
@@ -466,64 +464,13 @@ What are we brainstorming about?`
     session: { id: string };
   }> {
     if (agentName === 'brainstorm_system') {
-      return await createBrainstormSystem(env.LLM_MODEL, this.userId);
+      return await restoreBrainstormSystem(adkSessionId, env.LLM_MODEL, this.userId);
     } else {
-      return await createDiscoverySystem(env.LLM_MODEL, this.userId);
+      return await restoreDiscoverySystem(adkSessionId, env.LLM_MODEL, this.userId);
     }
   }
 
-  private async restoreConversationContext(
-    sessionId: string, 
-    currentPhase: string, 
-    runner: { ask: (message: string) => Promise<string> }
-  ): Promise<void> {
-    const previousMessages = await prisma.message.findMany({
-      where: { discoverySessionId: sessionId },
-      orderBy: { createdAt: "asc" }
-    });
-    
-    if (previousMessages.length > 0) {
-      const userMessages = previousMessages.filter(msg => msg.type === 'user');
-      const agentMessages = previousMessages.filter(msg => msg.type === 'agent');
-      
-      const lastUserMessage = userMessages[userMessages.length - 1];
-      const lastAgentMessage = agentMessages[agentMessages.length - 1];
-      
-      const conversationSummary = previousMessages
-        .slice(-10)
-        .map(msg => `${msg.type === 'user' ? 'User' : 'You'}: ${msg.content}`)
-        .join('\n\n');
-      
-      const phase = currentPhase || 'brainstorming';
-      
-      const contextPrompt = `[SYSTEM CONTEXT RESTORATION - DO NOT RESPOND TO THIS MESSAGE]
 
-You are resuming an active ${phase} session that was temporarily disconnected.
-
-CONVERSATION HISTORY (last 10 messages):
-${conversationSummary}
-
-YOUR LAST RESPONSE WAS:
-"${lastAgentMessage?.content || 'Starting conversation'}"
-
-USER'S LAST MESSAGE WAS:
-"${lastUserMessage?.content || 'Starting conversation'}"
-
-CRITICAL INSTRUCTIONS FOR CONTINUATION:
-1. You have full context of the above conversation
-2. Continue EXACTLY where you left off - do not restart or repeat
-3. Maintain the same tone, approach, and facilitation style
-4. Reference specific points from the conversation when relevant
-5. Do NOT greet the user again or ask already-answered questions
-6. The user is about to send their next message - respond naturally to it
-7. You are a FACILITATOR, not an idea generator
-8. Stay in your role as a guide/facilitator
-
-The session is now restored. The user will send their next message.`;
-      
-      await runner.ask(contextPrompt);
-    }
-  }
 
   private formatResponse(response: string): string {
     return response

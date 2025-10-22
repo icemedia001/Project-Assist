@@ -6,6 +6,38 @@ import { createArtifactService, createMemoryService, createSessionService } from
 import { prisma } from "../config/db";
 
 /**
+ * Common service setup for all agent systems
+ */
+async function createCommonServices() {
+  return {
+    sessionService: await createSessionService(),
+    artifactService: await createArtifactService(),
+    memoryService: await createMemoryService(),
+  };
+}
+
+/**
+ * Retrieve existing session with error handling
+ */
+async function getExistingSession(
+  sessionService: any,
+  userId: string,
+  existingSessionId: string
+) {
+  const existingSession = await sessionService.getSession(
+    'discovery-workshop',
+    userId,
+    existingSessionId
+  );
+
+  if (!existingSession) {
+    throw new Error(`Session ${existingSessionId} not found`);
+  }
+
+  return existingSession;
+}
+
+/**
  * Factory function to create a complete discovery system using ADK-TS
  * This is the main entry point for initializing the multi-agent discovery system
  */
@@ -28,9 +60,7 @@ export const createBrainstormSystem = async (model: string = env.LLM_MODEL, user
   }
 
   const brainAgent = createBrainAgent(model);
-  const sessionService = await createSessionService();
-  const artifactService = await createArtifactService();
-  const memoryService = await createMemoryService();
+  const { sessionService, artifactService, memoryService } = await createCommonServices();
 
   const { runner, session } = await AgentBuilder.create("brainstorm_system")
     .withModel(model)
@@ -96,4 +126,73 @@ export const createBrainstormSystem = async (model: string = env.LLM_MODEL, user
       });
     }
   };
+};
+
+/**
+ * Restore an existing brainstorm system with full session history
+ */
+export const restoreBrainstormSystem = async (
+  existingSessionId: string,
+  model: string = env.LLM_MODEL,
+  userId?: string
+) => {
+  if (!userId) {
+    throw new Error('UserId is required');
+  }
+
+  const brainAgent = createBrainAgent(model);
+  const { sessionService, artifactService, memoryService } = await createCommonServices();
+
+  const existingSession = await getExistingSession(sessionService, userId, existingSessionId);
+
+  const { runner, session } = await AgentBuilder.create("brainstorm_system")
+    .withModel(model)
+    .withDescription("Brainstorming facilitator (brain agent only)")
+    .withInstruction("You are the Brain Agent exclusively handling brainstorming.")
+    .withSubAgents([brainAgent])
+    .withSessionService(sessionService, { userId, appName: 'discovery-workshop' })
+    .withSession(existingSession)
+    .withArtifactService(artifactService)
+    .withMemory(memoryService)
+    .build();
+
+  return { runner, session };
+};
+
+/**
+ * Restore an existing discovery system with full session history
+ */
+export const restoreDiscoverySystem = async (
+  existingSessionId: string,
+  model: string = env.LLM_MODEL,
+  userId?: string
+) => {
+  if (!userId) {
+    throw new Error('UserId is required');
+  }
+
+  const discoverySystem = await createDiscoveryCoordinator(model, userId);
+  const { sessionService, artifactService, memoryService } = await createCommonServices();
+
+  const existingSession = await getExistingSession(sessionService, userId, existingSessionId);
+
+  const { runner, session } = await AgentBuilder.create("discovery_system")
+    .withModel(model)
+    .withDescription("Discovery coordinator with full agent system")
+    .withInstruction("You are the Discovery Coordinator managing the full discovery process.")
+    .withSubAgents([
+      discoverySystem.agents.brain,
+      discoverySystem.coordinator,
+      discoverySystem.agents.analyst,
+      discoverySystem.agents.pm,
+      discoverySystem.agents.architect,
+      discoverySystem.agents.validator,
+    ])
+    .withSessionService(sessionService, { userId, appName: 'discovery-workshop' })
+    .withSession(existingSession)
+    .withArtifactService(artifactService)
+    .withMemory(memoryService)
+    .build();
+
+  return { runner, session };
 };
