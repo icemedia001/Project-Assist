@@ -20,6 +20,26 @@ export const COMMAND_OPTIONS: CommandOption[] = [
     label: "@pm – Start project management session",
     description: "Start a project management session for idea prioritization and planning"
   },
+  {
+    key: "architect",
+    label: "@architect – Start technical architecture session",
+    description: "Start a technical architecture session to design the technical architecture for your project"
+  },
+  {
+    key: "validator",
+    label: "@validator – Start feasibility validation session",
+    description: "Start a feasibility validation session to validate the feasibility of your project"
+  },
+  {
+    key: "analyst",
+    label: "@analyst – Start business analysis session",
+    description: "Start a business analysis session"
+  },
+  {
+    key: "pm",
+    label: "@pm – Start project management session",
+    description: "Start a project management session"
+  }
 ];
 
 export const WELCOME_MESSAGE = `Welcome to Project Assist!
