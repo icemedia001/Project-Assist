@@ -25,13 +25,13 @@ export default function Home() {
       <main className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         <div className="text-center animate-fade-in">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight">
-            From idea to clarity
+            AI agents at your command
             <span className="block mt-2 bg-gradient-to-r from-[var(--accent)] to-[#e91e63] bg-clip-text text-transparent">
-              guided by AI-powered discovery
+              for every project challenge
             </span>
           </h1>
           <p className="mt-6 max-w-3xl mx-auto text-lg sm:text-xl md:text-2xl text-[color:var(--muted)] leading-relaxed">
-            Transform your concepts into actionable insights through structured brainstorming techniques and intelligent AI agents that guide your creative process.
+            Get instant help from specialized AI agents. Use commands like @brainstorm, @analyst, @pm, @architect, or @validator to tackle any project challenge with expert guidance.
           </p>
           
           <div className="mt-12 flex justify-center animate-slide-up">
@@ -41,9 +41,9 @@ export default function Home() {
                 className="inline-flex items-center px-8 py-4 text-lg font-semibold rounded-lg btn-primary btn-ripple hover-lift"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Start Discovery Session
+                Start Agent Session
               </Link>
             ) : (
               <Link
@@ -71,9 +71,9 @@ export default function Home() {
                       </svg>
                     </span>
                   </div>
-                  <h3 className="mt-8 text-xl font-semibold tracking-tight">AI-Powered Ideation</h3>
+                  <h3 className="mt-8 text-xl font-semibold tracking-tight">Command-Driven Agents</h3>
                   <p className="mt-4 text-base text-[color:var(--muted)] leading-relaxed">
-                    Leverage advanced AI techniques to generate creative ideas and solutions for complex problems through intelligent brainstorming.
+                    Instantly access specialized AI agents with simple commands. Type @brainstorm for creative facilitation, @analyst for problem analysis, or @pm for project planning.
                   </p>
                 </div>
               </div>
@@ -89,9 +89,9 @@ export default function Home() {
                       </svg>
                     </span>
                   </div>
-                  <h3 className="mt-8 text-xl font-semibold tracking-tight">Structured Discovery</h3>
+                  <h3 className="mt-8 text-xl font-semibold tracking-tight">Interactive Facilitation</h3>
                   <p className="mt-4 text-base text-[color:var(--muted)] leading-relaxed">
-                    Follow proven discovery methodologies with guided techniques like SCAMPER, Six Thinking Hats, and mind mapping.
+                    AI agents guide you through creative processes using facilitation techniques. They ask questions, build on your ideas, and help you discover solutions yourself.
                   </p>
                 </div>
               </div>
@@ -107,9 +107,9 @@ export default function Home() {
                       </svg>
                     </span>
                   </div>
-                  <h3 className="mt-8 text-xl font-semibold tracking-tight">Actionable Insights</h3>
+                  <h3 className="mt-8 text-xl font-semibold tracking-tight">Specialized Expertise</h3>
                   <p className="mt-4 text-base text-[color:var(--muted)] leading-relaxed">
-                    Get comprehensive reports with prioritized recommendations, feasibility analysis, and clear next steps for implementation.
+                    Access different AI agents for specific needs: @architect for technical design, @validator for feasibility checks, and @pm for project management guidance.
                   </p>
                 </div>
               </div>
