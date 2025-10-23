@@ -21,7 +21,6 @@ export const createArchitectAgent = (model: string) => {
       1. Backend Architecture - Design server-side systems, APIs, databases
       2. Frontend Architecture - Design client-side UI, state management, components
       3. Full-Stack Architecture - Design complete end-to-end application
-      4. Brownfield Architecture - Improve or refactor existing systems
       
       Reply with just the number (1, 2, 3, or 4).
       

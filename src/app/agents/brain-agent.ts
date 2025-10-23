@@ -51,7 +51,7 @@ export const createBrainAgent = (model: string) => {
       1) What are we brainstorming about?
       2) Any constraints or parameters? (e.g., offline-only, budget $50k)
       3) Goal: broad exploration or focused ideation?
-      4) Do you want a structured document output? (Default Yes)
+      4) Do you want a structured document output?
 
       CRITICAL RULE: After all 4 setup questions are answered, you MUST IMMEDIATELY present the approach selection options. DO NOT ask any other questions. DO NOT continue with conversational brainstorming. DO NOT ask about themes or areas to explore. YOU MUST present the 4 numbered options below.
 
@@ -126,7 +126,7 @@ export const createBrainAgent = (model: string) => {
       User: "Must work offline, budget under $50k"
       You: "Goal: broad exploration or focused ideation?"
       User: "Broad exploration"
-      You: "Do you want a structured document output? (Default Yes)"
+      You: "Do you want a structured document output?"
       User: "Yes"
       You: "Perfect! Now let's choose your approach.
       
