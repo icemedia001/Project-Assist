@@ -47,7 +47,6 @@ export default function SessionInterface({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -107,7 +106,6 @@ export default function SessionInterface({
     }
   };
 
-
   useEffect(() => {
     if (!sessionId) {
       setMessages([
@@ -118,6 +116,8 @@ export default function SessionInterface({
           timestamp: new Date(),
         },
       ]);
+      setSessionEnded(false);
+      setReportData(null);
     } else {
       loadMessageHistory();
     }
@@ -144,6 +144,21 @@ export default function SessionInterface({
         }));
         
         setMessages(historyMessages);
+        
+        // If the session was already completed, fetch its report status
+        const sessionDetailsResponse = await fetch("/api/sessions");
+        if (sessionDetailsResponse.ok) {
+          const sessionsData = await sessionDetailsResponse.json();
+          const activeSess = sessionsData.sessions?.find((s: any) => s.id === sessionId);
+          if (activeSess && activeSess.status === "completed") {
+            const reportResponse = await fetch(`/api/report/${sessionId}`);
+            if (reportResponse.ok) {
+              const reportResult = await reportResponse.json();
+              setReportData(reportResult);
+              setSessionEnded(true);
+            }
+          }
+        }
       } else {
         console.error("Failed to fetch messages, status:", response.status);
       }
@@ -154,10 +169,11 @@ export default function SessionInterface({
     }
   };
 
-  const handleStartSession = async () => {
-    if (!input.trim() || !session?.user?.id) return;
+  const handleStartSession = async (customInput?: string) => {
+    const textToSubmit = customInput || input.trim();
+    if (!textToSubmit || !session?.user?.id) return;
 
-    const command = parseCommand(input.trim());
+    const command = parseCommand(textToSubmit);
     
     if (!command) {
       setShowCommandValidation(true);
@@ -192,7 +208,7 @@ export default function SessionInterface({
       const userMessage: Message = {
         id: Date.now().toString(),
         type: "user",
-        content: input.trim(),
+        content: textToSubmit,
         timestamp: new Date(),
       };
 
@@ -353,8 +369,25 @@ export default function SessionInterface({
     }
   };
 
+  const handleChipClick = (cmd: string, placeholderIdea: string) => {
+    const formatted = `@${cmd} ${placeholderIdea}`;
+    setInput(formatted);
+    setShowCommandMenu(false);
+  };
+
+  const getAgentColorDot = (key: string) => {
+    switch (key) {
+      case "brainstorm": return "bg-purple-500 shadow-[0_0_8px_#a855f7]";
+      case "pm": return "bg-emerald-500 shadow-[0_0_8px_#10b981]";
+      case "architect": return "bg-orange-500 shadow-[0_0_8px_#f97316]";
+      case "validator": return "bg-pink-500 shadow-[0_0_8px_#ec4899]";
+      case "analyst": return "bg-blue-500 shadow-[0_0_8px_#3b82f6]";
+      default: return "bg-slate-400";
+    }
+  };
+
   return (
-    <div className="flex h-full">
+    <div className="flex h-full bg-[#0b0f19]">
       {/* Sidebar */}
       <SessionSidebar
         currentSessionId={sessionId}
@@ -366,133 +399,199 @@ export default function SessionInterface({
       />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col surface min-h-0">
+      <div className="flex-1 flex flex-col min-h-0 relative z-10 border-l border-white/5">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[color:var(--border)]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 rounded-md hover:bg-[color:var(--accent)]/10 text-[color:var(--muted)] hover:text-[color:var(--text)] transition-colors lg:hidden"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <div>
-                <h2 className="text-lg font-semibold">
-                  Discovery Session
-                </h2>
-                {sessionId && (
-                  <div className="flex items-center space-x-2 mt-1">
-                    <p className="text-sm text-[color:var(--muted)]">
-                      Session ID: {sessionId.slice(0, 8)}...
-                    </p>
-                    {isLoadingHistory && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300">
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-1"></div>
-                        Loading history...
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
+        <div className="px-6 py-4 bg-[#0d1220]/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center space-x-3.5">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-slate-200 transition-colors lg:hidden"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div>
+              <h2 className="text-base font-bold text-slate-200">
+                Workspace
+              </h2>
+              {sessionId && (
+                <div className="flex items-center space-x-2 mt-0.5">
+                  <p className="text-[11px] text-slate-500 font-semibold font-mono">
+                    ID: {sessionId.slice(0, 12)}...
+                  </p>
+                  {isLoadingHistory && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse mr-1"></span>
+                      Syncing history
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
+          
+          {sessionId && !sessionEnded && (
+            <button
+              onClick={handleEndSession}
+              disabled={isEndingSession || isStreaming}
+              className="px-4.5 py-1.5 text-xs font-bold rounded-lg bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+            >
+              {isEndingSession ? "Ending..." : "End Session"}
+            </button>
+          )}
         </div>
 
         {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto min-h-0 px-6 py-4 space-y-4 main-content">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.type === "user" ? "justify-end" : "justify-start"} message-enter`}
-          >
-            <div
-              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                message.type === "user"
-                  ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                  : message.type === "agent"
-                  ? "bg-[#1f2637] text-[color:var(--text)]"
-                  : message.type === "technique"
-                  ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                  : "bg-pink-600/20 text-pink-300"
-              }`}
-            >
-              {message.type === "technique" && (
-                <div className="flex items-center mb-2">
-                  <span className="text-xs font-medium bg-purple-500/20 px-2 py-1 rounded-full">
-                    {message.technique || "Technique"}
+        <div className="flex-1 overflow-y-auto min-h-0 px-6 py-6 space-y-6 main-content">
+          {messages.map((message) => {
+            if (message.type === "system" && message.id === "welcome") {
+              // Beautiful Custom Welcome card instead of raw system prompt
+              return (
+                <div key={message.id} className="max-w-3xl mx-auto py-8 px-6 glass-panel border border-white/5 space-y-5 text-center sm:text-left">
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold bg-gradient-to-r from-fuchsia-400 to-blue-400 bg-clip-text text-transparent">
+                      Project Assist Discovery Workspace
+                    </h3>
+                    <p className="text-sm text-slate-400 leading-relaxed font-medium">
+                      Brainstorm, map design layouts, write product requirements documents, and validate project feasibility side-by-side with specialized AI agents.
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 text-left">
+                    {COMMAND_OPTIONS.map((cmd) => (
+                      <div 
+                        key={cmd.key}
+                        onClick={() => handleChipClick(cmd.key, "a new project")}
+                        className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-fuchsia-500/30 hover:bg-fuchsia-500/[0.02] cursor-pointer transition-all duration-300 group flex items-start space-x-3"
+                      >
+                        <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${getAgentColorDot(cmd.key)}`}></span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-200 group-hover:text-fuchsia-300 transition-colors">
+                            @{cmd.key}
+                          </p>
+                          <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2">
+                            {cmd.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            if (message.type === "system") {
+              return (
+                <div key={message.id} className="flex justify-center my-3">
+                  <span className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white/[0.04] border border-white/5 text-slate-400 font-mono">
+                    {message.content}
                   </span>
                 </div>
-              )}
-              <div className="text-sm">
-                {message.type === "agent" ? (
-                  <div className="prose prose-invert prose-sm max-w-none">
-                    <ReactMarkdown>
-                      {message.content}
-                    </ReactMarkdown>
+              );
+            }
+
+            const isUser = message.type === "user" || message.type === "technique";
+            return (
+              <div
+                key={message.id}
+                className={`flex ${isUser ? "justify-end" : "justify-start"} message-enter`}
+              >
+                <div className={`flex flex-col space-y-1 max-w-[85%] md:max-w-2xl ${isUser ? "items-end" : "items-start"}`}>
+                  <div className="flex items-center space-x-2 text-[10px] text-slate-500 px-2 font-semibold">
+                    {!isUser && (
+                      <span className="text-fuchsia-400">@assist</span>
+                    )}
+                    <span>{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    {message.phase && (
+                      <span className="uppercase text-[9px] tracking-wider px-1.5 py-0.5 rounded bg-white/5 text-slate-400">
+                        {message.phase}
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <div className="whitespace-pre-line">{message.content}</div>
-                )}
-              </div>
-              {message.waitingForResponse && (
-                <div className="flex items-center mt-2 text-xs opacity-70">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
-                  Waiting for your response...
-                </div>
-              )}
-              <p className="text-xs opacity-70 mt-1">
-                {message.timestamp.toLocaleTimeString()}
-                {message.phase && ` • ${message.phase}`}
-              </p>
-            </div>
-          </div>
-        ))}
-        
-        {isStreaming && (
-          <div className="flex justify-start">
-            <div className="bg-[#1f2637] text-[color:var(--text)] px-4 py-2 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <div className="animate-pulse">Thinking...</div>
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-[var(--accent)]/60 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-[var(--accent)]/60 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                  <div className="w-2 h-2 bg-[var(--accent)]/60 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} />
-      </div>
+                  
+                  <div
+                    className={`px-5 py-3.5 rounded-2xl shadow-lg border ${
+                      isUser
+                        ? "bg-gradient-to-br from-fuchsia-600/90 to-purple-600/95 border-fuchsia-500/20 text-white rounded-tr-sm"
+                        : message.type === "technique"
+                        ? "bg-purple-950/20 border-purple-500/30 text-purple-300 rounded-tl-sm"
+                        : "bg-[#121625]/90 border-white/5 text-slate-200 rounded-tl-sm"
+                    }`}
+                  >
+                    <div className="text-sm leading-relaxed">
+                      {!isUser ? (
+                        <div className="prose prose-invert prose-sm max-w-none">
+                          <ReactMarkdown>
+                            {message.content}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-line font-medium">{message.content}</div>
+                      )}
+                    </div>
 
-      {sessionEnded && reportData && (
-        <div className="px-6 py-4 border-t border-[color:var(--border)] bg-green-600/10">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-green-300 mb-2">Discovery Report</h3>
-            <div className="bg-[color:var(--surface)] rounded-md p-4 border border-green-500/30">
+                    {message.waitingForResponse && (
+                      <div className="flex items-center mt-3 pt-2.5 border-t border-white/5 text-[10px] font-semibold text-emerald-400">
+                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping mr-2"></span>
+                        Awaiting your reply...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          
+          {isStreaming && (
+            <div className="flex justify-start message-enter">
+              <div className="flex flex-col space-y-1">
+                <span className="text-[10px] text-slate-500 px-2 font-semibold">Thinking...</span>
+                <div className="bg-[#121625]/95 border border-white/5 px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-md">
+                  <div className="flex items-center space-x-1.5">
+                    <div className="w-2.5 h-2.5 bg-fuchsia-500/50 rounded-full animate-bounce"></div>
+                    <div className="w-2.5 h-2.5 bg-fuchsia-500/50 rounded-full animate-bounce" style={{ animationDelay: "0.15s" }}></div>
+                    <div className="w-2.5 h-2.5 bg-fuchsia-500/50 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Ending Session Report block */}
+        {sessionEnded && reportData && (
+          <div className="px-6 py-6 border-t border-white/5 bg-emerald-500/[0.02]">
+            <div className="max-w-3xl mx-auto glass-panel border border-emerald-500/20 p-6 relative overflow-hidden rounded-xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl"></div>
+              
               <div className="prose prose-invert prose-sm max-w-none">
-                <ReactMarkdown>
-                  {`# ${reportData.report?.title || 'Discovery Session Report'}
+                <h3 className="text-lg font-bold text-emerald-400 flex items-center space-x-2">
+                  <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Discovery Session Finalized Successfully</span>
+                </h3>
+                
+                <p className="text-slate-300 mt-2">
+                  Your structured design concepts, priorities, and implementation ideas have been aggregated into a discovery report.
+                </p>
 
-**Status:** ${reportData.report?.status || 'Completed'}  
-**Phase:** ${reportData.report?.currentPhase || 'N/A'}  
-**Created:** ${new Date(reportData.report?.createdAt).toLocaleString()}  
-**Updated:** ${new Date(reportData.report?.updatedAt).toLocaleString()}
-
-${reportData.report?.problemStatement ? `## Problem Statement\n\n${reportData.report.problemStatement}\n\n` : ''}
-
-## Session Summary
-
-This discovery session has been completed successfully. The report contains all the insights, ideas, and recommendations generated during your session.
-
-[Download Full Report](${reportData.downloadUrl || '#'})`}
-                </ReactMarkdown>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-5 bg-slate-950/40 p-4 rounded-xl border border-white/5">
+                  <div>
+                    <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Project Phase</span>
+                    <span className="text-slate-200 font-semibold">{reportData.report?.currentPhase || 'Brainstorming'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</span>
+                    <span className="text-emerald-400 font-semibold">Completed</span>
+                  </div>
+                </div>
               </div>
-              <div className="mt-4 flex space-x-2">
+              
+              <div className="mt-6 flex flex-wrap gap-3">
                 <button
                   onClick={() => {
                     setSessionEnded(false);
@@ -500,89 +599,139 @@ This discovery session has been completed successfully. The report contains all 
                     setMessages([]);
                     onSessionStart('');
                   }}
-                  className="px-4 py-2 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
+                  className="btn-secondary px-5 py-2 text-xs font-bold rounded-lg"
                 >
                   Start New Session
                 </button>
+                
                 <a
                   href={reportData.downloadUrl || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 text-sm font-medium rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+                  className="btn-primary px-5 py-2 text-xs font-bold rounded-lg shadow-md flex items-center space-x-2"
                 >
-                  Download Report
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>Download Full PDF Report</span>
                 </a>
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      <div className="px-6 py-4 border-t border-[color:var(--border)]">
-        {showCommandValidation && (
-          <div className="mb-4 p-3 bg-pink-600/20 border border-pink-500/30 rounded-md text-pink-300 text-sm">
-            Please start with a command (e.g., @help or @brainstorm)
-          </div>
         )}
-        <div className="flex space-x-4 relative">
-          {showCommandMenu && (
-            <div className="absolute -top-2 left-0 right-24 translate-y-[-100%] z-20">
-              <div className="rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] shadow-lg overflow-hidden">
-                <ul className="max-h-60 overflow-y-auto text-sm">
-                  {filteredCommands.length === 0 && (
-                    <li className="px-3 py-2 text-[color:var(--muted)]">No commands</li>
-                  )}
-                  {filteredCommands.map((opt, idx) => (
-                    <li
-                      key={opt.key}
-                      className={`${idx === selectedCommandIndex ? "bg-[color:var(--accent)]/20" : ""} px-3 py-2 cursor-pointer hover:bg-[color:var(--accent)]/10`}
-                      onMouseEnter={() => setSelectedCommandIndex(idx)}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setInput(`@${opt.key} `);
-                        setShowCommandMenu(false);
-                      }}
-                    >
-                      {opt.label}
-                    </li>
-                  ))}
-                </ul>
+
+        {/* Input panel & Suggestions */}
+        <div className="px-6 py-5 bg-[#0b0f19] border-t border-white/5 space-y-4">
+          
+          {/* Quick Start chips if zero messages or welcome screen */}
+          {(!sessionId || messages.length <= 1) && (
+            <div className="flex flex-col space-y-2">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider select-none">Quick Prompts Suggestions</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleChipClick("brainstorm", "a real-time fitness challenge mobile app")}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 hover:border-purple-500/35 transition-all duration-300 cursor-pointer"
+                >
+                  💡 @brainstorm fitness app
+                </button>
+                <button
+                  onClick={() => handleChipClick("architect", "a multiplayer 3D canvas collaboration game")}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 border border-orange-500/20 hover:border-orange-500/35 transition-all duration-300 cursor-pointer"
+                >
+                  📐 @architect multiplayer game
+                </button>
+                <button
+                  onClick={() => handleChipClick("pm", "a subscription billing dashboard for SaaS")}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 hover:border-emerald-500/35 transition-all duration-300 cursor-pointer"
+                >
+                  📊 @pm subscription billing
+                </button>
               </div>
             </div>
           )}
-          <textarea
-            value={input}
-            onChange={(e) => handleInputChange(e.target.value)}
-            onKeyPress={handleKeyPress}
-            onKeyDown={handleKeyDown}
-            placeholder={
-              !sessionId
-                ? "Type a command to begin (e.g., @brainstorm)..."
-                : sessionEnded
-                ? "Session ended - view report below"
-                : "Share your thoughts, ideas, or responses..."
-            }
-            className="flex-1 resize-none rounded-md px-3 py-2 text-sm bg-[color:var(--surface)] text-[color:var(--text)] border border-[color:var(--border)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] focus:border-transparent"
-            rows={2}
-            disabled={isLoading || isStreaming || sessionEnded}
-          />
-          {sessionId && !sessionEnded && (
-            <button
-              onClick={handleEndSession}
-              disabled={isEndingSession || isStreaming}
-              className="px-4 py-2 text-sm font-medium rounded-md bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-            >
-              {isEndingSession ? "Ending..." : "End Session"}
-            </button>
+
+          {showCommandValidation && (
+            <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs font-bold flex items-center space-x-2 animate-bounce">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Please start with a valid command prefix, e.g., @brainstorm, @pm, @architect, or @validator.</span>
+            </div>
           )}
-          <button
-            onClick={!sessionId ? handleStartSession : handleSendMessage}
-            disabled={!input.trim() || isLoading || isStreaming || sessionEnded}
-            className="px-4 py-2 text-sm font-medium rounded-md btn-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-          >
-            {!sessionId ? "Start" : "Send"}
-          </button>
-        </div>
+
+          <div className="flex items-end space-x-3 relative">
+            
+            {/* Redesigned Autocomplete Menu */}
+            {showCommandMenu && (
+              <div className="absolute top-0 left-0 right-0 -translate-y-full z-20 pb-2">
+                <div className="glass-panel bg-[#0e1424]/95 border border-white/10 shadow-2xl rounded-2xl overflow-hidden p-2">
+                  <div className="px-3 py-1.5 border-b border-white/5 mb-1.5 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    <span>Available Agents Commands</span>
+                    <span>Use Tab / Enter to select</span>
+                  </div>
+                  <ul className="max-h-60 overflow-y-auto text-xs space-y-0.5">
+                    {filteredCommands.length === 0 && (
+                      <li className="px-3 py-2 text-slate-500 font-semibold">No agents found matching that search</li>
+                    )}
+                    {filteredCommands.map((opt, idx) => (
+                      <li
+                        key={opt.key}
+                        className={`
+                          px-3 py-2 cursor-pointer rounded-lg transition-all duration-200 flex items-center justify-between
+                          ${idx === selectedCommandIndex 
+                            ? "bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-300" 
+                            : "text-slate-300 hover:bg-white/5 border border-transparent"
+                          }
+                        `}
+                        onMouseEnter={() => setSelectedCommandIndex(idx)}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setInput(`@${opt.key} `);
+                          setShowCommandMenu(false);
+                        }}
+                      >
+                        <div className="flex items-center space-x-2.5">
+                          <span className={`w-2 h-2 rounded-full ${getAgentColorDot(opt.key)}`}></span>
+                          <span className="font-bold">@{opt.key}</span>
+                          <span className="text-slate-500 hidden sm:inline">—</span>
+                          <span className="text-slate-400 text-[10px]">{opt.description}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-500 hidden sm:inline uppercase">Agent Active</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            <textarea
+              value={input}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                !sessionId
+                  ? "Type a command to begin (e.g., @brainstorm a new mobile fitness app)..."
+                  : sessionEnded
+                  ? "Session ended. Reset to start a new session."
+                  : "Share your thoughts, answers, or requests with the agent..."
+              }
+              className="flex-1 resize-none rounded-xl px-4 py-3 text-xs bg-slate-950/60 text-slate-100 border border-white/5 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:border-transparent min-h-[50px] max-h-[160px] font-medium"
+              rows={2}
+              disabled={isLoading || isStreaming || sessionEnded}
+            />
+
+            <button
+              onClick={!sessionId ? () => handleStartSession() : handleSendMessage}
+              disabled={!input.trim() || isLoading || isStreaming || sessionEnded}
+              className="btn-primary px-5 py-3 rounded-xl text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shrink-0 shadow-md flex items-center space-x-1.5"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+              <span>{!sessionId ? "Start" : "Send"}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -13,16 +13,16 @@ export default function Navigation() {
 
   if (isLoading) {
     return (
-      <nav className="backdrop-blur supports-[backdrop-filter]:bg-[#0f1422]/70 bg-[#0f1422] border-b border-[color:var(--border)]">
+      <nav className="sticky top-0 z-50 w-full bg-[#0b0f19]/60 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-xl font-bold text-[color:var(--text)]">
+              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-fuchsia-400 via-purple-500 to-blue-500 bg-clip-text text-transparent">
                 Project Assist
-              </Link>
+              </span>
             </div>
             <div className="flex items-center">
-              <div className="animate-pulse bg-[#1f2637] h-8 w-24 rounded"></div>
+              <div className="animate-pulse bg-white/5 h-8 w-24 rounded-lg"></div>
             </div>
           </div>
         </div>
@@ -31,31 +31,34 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="backdrop-blur supports-[backdrop-filter]:bg-[#0f1422]/70 bg-[#0f1422] border-b border-[color:var(--border)] sticky top-0 z-50">
+    <nav className="sticky top-0 z-50 w-full bg-[#0b0f19]/60 backdrop-blur-md border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link href="/" className="text-xl font-bold text-[color:var(--text)] hover:text-[var(--accent)] transition-colors">
+          <div className="flex items-center space-x-8">
+            <Link 
+              href="/" 
+              className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-fuchsia-400 via-purple-400 to-blue-400 bg-clip-text text-transparent hover:brightness-110 transition-all duration-300"
+            >
               Project Assist
             </Link>
             {isAuthenticated && (
-              <div className="ml-10 flex items-baseline space-x-2">
+              <div className="hidden md:flex items-center space-x-2">
                 <Link
                   href="/discovery"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     pathname === "/discovery"
-                      ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-lg"
-                      : "text-[color:var(--text)]/70 hover:text-[color:var(--text)] hover:bg-[#1b2233] hover:shadow-md"
+                      ? "bg-gradient-to-r from-fuchsia-500/20 to-purple-500/20 border border-fuchsia-500/30 text-fuchsia-300 shadow-[0_0_15px_rgba(217,70,239,0.15)]"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent"
                   }`}
                 >
                   Discovery
                 </Link>
                 <Link
                   href="/dashboard"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     pathname === "/dashboard"
-                      ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-lg"
-                      : "text-[color:var(--text)]/70 hover:text-[color:var(--text)] hover:bg-[#1b2233] hover:shadow-md"
+                      ? "bg-gradient-to-r from-fuchsia-500/20 to-purple-500/20 border border-fuchsia-500/30 text-fuchsia-300 shadow-[0_0_15px_rgba(217,70,239,0.15)]"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent"
                   }`}
                 >
                   Dashboard
@@ -66,22 +69,26 @@ export default function Navigation() {
 
           <div className="flex items-center">
             {isAuthenticated ? (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  {session?.user?.image && (
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2.5">
+                  {session?.user?.image ? (
                     <img
-                      className="h-8 w-8 rounded-full"
+                      className="h-8 w-8 rounded-full border border-fuchsia-500/30 shadow-[0_0_8px_rgba(217,70,239,0.2)]"
                       src={session.user.image}
                       alt={session.user.name || "User"}
                     />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-md">
+                      {((session?.user?.name || session?.user?.email || "U")[0]).toUpperCase()}
+                    </div>
                   )}
-                  <span className="text-sm font-medium text-[color:var(--text)]/80">
+                  <span className="hidden sm:inline text-sm font-medium text-slate-300">
                     {session?.user?.name || session?.user?.email}
                   </span>
                 </div>
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
-                  className="text-sm text-[color:var(--text)]/70 hover:text-[color:var(--text)] transition-colors hover:bg-[#1b2233] px-3 py-2 rounded-md"
+                  className="px-3.5 py-1.5 rounded-lg text-sm font-semibold text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all duration-300"
                 >
                   Sign out
                 </button>
@@ -89,9 +96,9 @@ export default function Navigation() {
             ) : (
               <Link
                 href="/auth/signin"
-                className="px-4 py-2 rounded-md text-sm font-medium bg-[var(--accent)] text-[var(--accent-contrast)] hover:brightness-95 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+                className="btn-primary px-5 py-2 text-sm font-semibold shadow-md rounded-lg flex items-center space-x-1"
               >
-                Sign in
+                <span>Sign in</span>
               </Link>
             )}
           </div>

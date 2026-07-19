@@ -19,23 +19,30 @@ export default function SignIn() {
   const handleGoogleSignIn = () => signIn("google", { callbackUrl });
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="max-w-md w-full space-y-8 p-8 surface">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold">
-            Welcome to Project Assist
+    <div className="min-h-screen flex items-center justify-center bg-[#0b0f19] px-4 relative overflow-hidden">
+      {/* Decorative Blur Orbs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-fuchsia-500/10 blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-blue-500/10 blur-[120px] pointer-events-none"></div>
+
+      <div className="max-w-md w-full space-y-8 p-10 glass-panel border border-white/5 relative z-10">
+        <div className="text-center space-y-3">
+          <span className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-fuchsia-400 via-purple-400 to-blue-400 bg-clip-text text-transparent text-glow">
+            Project Assist
+          </span>
+          <h2 className="text-2xl font-bold text-slate-100 tracking-tight mt-4">
+            Welcome to the Workspace
           </h2>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">
-            Sign in to start your creative discovery journey
+          <p className="text-sm text-slate-400 font-medium">
+            Sign in to start your collaborative discovery session
           </p>
         </div>
 
         <div className="mt-8">
           <button
             onClick={handleGoogleSignIn}
-            className="group relative w-full flex justify-center py-3 px-4 text-sm font-medium rounded-md btn-primary"
+            className="group relative w-full flex justify-center items-center py-3.5 px-4 text-sm font-semibold rounded-xl btn-primary shadow-lg"
           >
-            <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+            <span className="absolute left-0 inset-y-0 flex items-center pl-4 text-white">
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -55,13 +62,13 @@ export default function SignIn() {
                 />
               </svg>
             </span>
-            Sign in with Google
+            <span>Sign in with Google</span>
           </button>
         </div>
 
-        <div className="mt-6 text-center">
-          <p className="text-xs text-[color:var(--muted)]">
-            By signing in, you agree to our Terms of Service and Privacy Policy.
+        <div className="text-center pt-2">
+          <p className="text-xs text-slate-500 font-medium">
+            By signing in, you agree to our <span className="text-fuchsia-400/80 hover:underline cursor-pointer">Terms of Service</span> and <span className="text-fuchsia-400/80 hover:underline cursor-pointer">Privacy Policy</span>.
           </p>
         </div>
       </div>
