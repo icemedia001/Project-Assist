@@ -7,7 +7,7 @@ import Navigation from "@/app/components/Navigation";
 import SessionInterface from "./components/SessionInterface";
 
 export default function DiscoveryPage() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth(true);
   const searchParams = useSearchParams();
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);

@@ -20,7 +20,7 @@ interface Session {
 const PHASES = ["setup", "brainstorming", "prioritization", "architecture", "validation"];
 
 export default function Dashboard() {
-  const { isAuthenticated, isLoading, session } = useAuth();
+  const { isAuthenticated, isLoading, session } = useAuth(true);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
