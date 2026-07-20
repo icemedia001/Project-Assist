@@ -34,11 +34,6 @@ export const COMMAND_OPTIONS: CommandOption[] = [
     key: "analyst",
     label: "@analyst – Start business analysis session",
     description: "Start a business analysis session"
-  },
-  {
-    key: "pm",
-    label: "@pm – Start project management session",
-    description: "Start a project management session"
   }
 ];
 
