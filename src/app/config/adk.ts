@@ -36,7 +36,7 @@ export interface ADKConfig {
 
 export const adkConfig: ADKConfig = {
   sessionService: {
-    type: 'database',
+    type: 'memory',
     connectionString: process.env.ADK_DATABASE_URL || env.DATABASE_URL,
   },
   

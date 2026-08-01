@@ -31,7 +31,7 @@ export const llmConfig: LLMConfig = {
   },
   
   apiKeys: {
-    openai: env.OPENAI_API_KEY,
+    openai: env.OPENAI_API_KEY || '',
     google: env.GOOGLE_API_KEY || '',
     anthropic: env.ANTHROPIC_API_KEY || '',
   },

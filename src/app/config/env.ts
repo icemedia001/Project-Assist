@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { config } from 'dotenv';
 
+config({ path: '.env.local' });
 config();
 
 const envSchema = z.object({
@@ -9,17 +10,17 @@ const envSchema = z.object({
   NEXTAUTH_SECRET: z.string().min(32, 'NextAuth secret must be at least 32 characters'),
   NEXTAUTH_URL: z.string().url('Invalid NextAuth URL'),
   
-  OPENAI_API_KEY: z.string().min(1, 'OpenAI API key is required').refine(
-    (key) => key.startsWith('sk-') || key.startsWith('sk-proj-'),
-    'OpenAI API key must start with "sk-" or "sk-proj-"'
+  OPENAI_API_KEY: z.string().optional().refine(
+    (key) => !key || key.startsWith('sk-') || key.startsWith('sk-proj-'),
+    'OpenAI API key must start with "sk-" or "sk-proj-" if provided'
   ),
   GOOGLE_API_KEY: z.string().optional().refine(
-    (key) => !key || key.length > 10,
-    'Google API key must be at least 10 characters if provided'
+    (key) => !key || key.length > 5,
+    'Google API key must be at least 5 characters if provided'
   ),
-         ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
   
-  LLM_MODEL: z.string().default('gpt-4o'),
+  LLM_MODEL: z.string().default('gemini-3.6-flash'),
   AGENT_MAX_ITERATIONS: z.string().default('10').transform((val) => {
     const num = parseInt(val, 10);
     if (isNaN(num) || num < 1 || num > 100) {
