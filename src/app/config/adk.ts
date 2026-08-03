@@ -41,8 +41,8 @@ export const adkConfig: ADKConfig = {
   },
   
   artifactService: {
-    type: (isProduction || process.env.USE_GCS === 'true') ? 'gcs' : 'memory',
-    config: (isProduction || process.env.USE_GCS === 'true') ? {
+    type: (process.env.USE_GCS === 'true' && env.GCS_BUCKET_NAME) ? 'gcs' : 'memory',
+    config: (process.env.USE_GCS === 'true' && env.GCS_BUCKET_NAME) ? {
       bucketName: env.GCS_BUCKET_NAME,
       credentials: env.GOOGLE_APPLICATION_CREDENTIALS,
       projectId: env.GOOGLE_CLOUD_PROJECT
@@ -50,8 +50,8 @@ export const adkConfig: ADKConfig = {
   },
   
   memoryService: {
-    type: (isProduction || process.env.USE_REDIS === 'true') ? 'redis' : 'memory',
-    config: (isProduction || process.env.USE_REDIS === 'true') ? {
+    type: (process.env.USE_REDIS === 'true' && env.REDIS_URL) ? 'redis' : 'memory',
+    config: (process.env.USE_REDIS === 'true' && env.REDIS_URL) ? {
       url: env.REDIS_URL,
       host: env.REDIS_HOST,
       port: env.REDIS_PORT,
@@ -106,8 +106,7 @@ export async function createArtifactService(): Promise<GcsArtifactService | InMe
     if (adkConfig.artifactService.type === 'gcs' && adkConfig.artifactService.config) {
       const { bucketName, credentials, projectId } = adkConfig.artifactService.config;
       
-      if (!bucketName) {
-        console.warn('GCS bucket name not provided, falling back to in-memory artifact service');
+      if (!bucketName || !credentials || credentials === '/path/to/service-account.json') {
         return new InMemoryArtifactService();
       }
 
@@ -142,20 +141,16 @@ export async function createArtifactService(): Promise<GcsArtifactService | InMe
       }
     }
     
-    if (isDevelopment) {
-      console.log('Using in-memory artifact service');
-    }
     return new InMemoryArtifactService();
   } catch (error) {
     console.error('Failed to create artifact service:', error);
-    console.log('Falling back to in-memory artifact service');
     return new InMemoryArtifactService();
   }
 }
 
 export async function createMemoryService(): Promise<BaseMemoryService> {
   try {
-    if (adkConfig.memoryService.type === 'redis' && adkConfig.memoryService.config) {
+    if (adkConfig.memoryService.type === 'redis' && adkConfig.memoryService.config?.url) {
       const redisService = new RedisMemoryService(adkConfig.memoryService.config.url as string);
       
       const isConnected = await redisService.ping();
@@ -166,16 +161,14 @@ export async function createMemoryService(): Promise<BaseMemoryService> {
         return redisService;
       } else {
         console.warn('Redis connection failed, falling back to in-memory memory service');
+        await redisService.disconnect().catch(() => {});
+        return new InMemoryMemoryService();
       }
     }
     
-    if (isDevelopment) {
-      console.log('Using in-memory memory service');
-    }
     return new InMemoryMemoryService();
   } catch (error) {
     console.error('Failed to create memory service:', error);
-    console.log('Falling back to in-memory memory service');
     return new InMemoryMemoryService();
   }
 }

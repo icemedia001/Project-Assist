@@ -8,10 +8,23 @@ export class RedisMemoryService implements BaseMemoryService {
 
   constructor(redisUrl?: string) {
     const url = redisUrl || this.buildRedisUrl();
-    this.client = createClient({ url });
+    this.client = createClient({ 
+      url,
+      socket: {
+        connectTimeout: 2000,
+        reconnectStrategy: (retries) => {
+          if (retries >= 2) {
+            return new Error('Redis max retries reached');
+          }
+          return 200;
+        }
+      }
+    });
     
     this.client.on('error', (err) => {
-      console.error('Redis Client Error:', err);
+      if ((err as any)?.code !== 'ECONNRESET' && (err as any)?.message !== 'Socket closed unexpectedly') {
+        console.error('Redis Client Error:', err);
+      }
       this.isConnected = false;
     });
 
@@ -21,7 +34,6 @@ export class RedisMemoryService implements BaseMemoryService {
     });
 
     this.client.on('disconnect', () => {
-      console.log('Redis Client Disconnected');
       this.isConnected = false;
     });
   }
