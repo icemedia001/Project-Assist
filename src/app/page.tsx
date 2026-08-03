@@ -70,7 +70,7 @@ export default function Home() {
       <main className="max-w-7xl mx-auto py-20 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center space-y-6">
           <div className="inline-flex items-center space-x-2 bg-fuchsia-500/10 border border-fuchsia-500/30 px-3.5 py-1.5 rounded-full text-xs font-semibold text-fuchsia-300 shadow-sm animate-pulse-glow">
-            <span>✨ Now in Beta: AI Collaborative Discovery Workspace</span>
+            <span>Now in Beta: AI Collaborative Discovery Workspace</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-tight">
