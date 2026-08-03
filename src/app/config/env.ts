@@ -83,6 +83,24 @@ const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>;
 
 function validateEnv(): Env {
+  if (!process.env.DATABASE_URL) {
+    const fallbackDbUrl = process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL_UNPOOLED;
+    if (fallbackDbUrl) {
+      process.env.DATABASE_URL = fallbackDbUrl;
+    }
+  }
+
+  if (!process.env.NEXTAUTH_SECRET && process.env.AUTH_SECRET) {
+    process.env.NEXTAUTH_SECRET = process.env.AUTH_SECRET;
+  }
+
+  if (!process.env.NEXTAUTH_URL) {
+    const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+    if (vercelUrl) {
+      process.env.NEXTAUTH_URL = vercelUrl.startsWith('http') ? vercelUrl : `https://${vercelUrl}`;
+    }
+  }
+
   try {
     return envSchema.parse(process.env);
   } catch (error) {
